@@ -279,3 +279,88 @@ Si tienes alguna pregunta, por favor contacta con ${reviewerName}.
   return { subject, html, text }
 }
 
+
+export function getPasswordResetEmailTemplate({ employeeName, resetLink }) {
+  const subject = `🔒 Restablecer tu contraseña - VacationHub`
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; }
+        .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+        .info-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #6366F1; }
+        .button { display: inline-block; padding: 12px 24px; background: #6366F1; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+        .warning-box { background: #FEF3C7; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #F59E0B; }
+        .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 12px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🔒 Restablecer Contraseña</h1>
+        </div>
+        <div class="content">
+          <p>Hola <strong>${employeeName}</strong>,</p>
+          <p>Recibimos una solicitud para restablecer la contraseña de tu cuenta en VacationHub.</p>
+
+          <div class="info-box">
+            <p>Si solicitaste este cambio, haz click en el botón de abajo para crear una nueva contraseña:</p>
+            <p style="text-align: center;">
+              <a href="${resetLink}" class="button">Restablecer Contraseña</a>
+            </p>
+            <p style="font-size: 12px; color: #6b7280; margin-top: 15px;">
+              O copia y pega este enlace en tu navegador:<br>
+              <span style="word-break: break-all;">${resetLink}</span>
+            </p>
+          </div>
+
+          <div class="warning-box">
+            <p><strong>⚠️ Importante:</strong></p>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+              <li>Este enlace expira en <strong>1 hora</strong></li>
+              <li>Si no solicitaste este cambio, ignora este email</li>
+              <li>Tu contraseña actual seguirá siendo válida</li>
+            </ul>
+          </div>
+
+          <p style="color: #6b7280; font-size: 14px;">
+            Si tienes problemas, contacta al administrador del sistema.
+          </p>
+        </div>
+        <div class="footer">
+          <p>VacationHub - Alter-5</p>
+          <p>Este es un email automático, por favor no responder.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `
+
+  const text = `
+Restablecer Contraseña - VacationHub
+
+Hola ${employeeName},
+
+Recibimos una solicitud para restablecer la contraseña de tu cuenta en VacationHub.
+
+Si solicitaste este cambio, visita el siguiente enlace:
+${resetLink}
+
+⚠️ IMPORTANTE:
+- Este enlace expira en 1 hora
+- Si no solicitaste este cambio, ignora este email
+- Tu contraseña actual seguirá siendo válida
+
+Si tienes problemas, contacta al administrador del sistema.
+
+VacationHub - Alter-5
+Este es un email automático, por favor no responder.
+  `
+
+  return { subject, html, text }
+}
