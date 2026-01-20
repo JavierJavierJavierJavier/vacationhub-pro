@@ -1,6 +1,7 @@
 import express from 'express'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
+import rateLimit from 'express-rate-limit'
 import { USERS, HASHED_CREDENTIALS, CREDENTIALS, updatePassword } from './authData.js'
 import { JWT_SECRET } from './config.js'
 import { authenticateJWT } from './authMiddleware.js'
@@ -28,13 +29,33 @@ testConnection().then(connected => {
 
 export const authRouter = express.Router()
 
-authRouter.post('/login', async (req, res) => {
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Demasiados intentos. Intenta más tarde.' },
+})
+
+const passwordResetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Demasiadas solicitudes. Intenta más tarde.' },
+})
+
+authRouter.post('/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body || {}
 
   if (!email || !password) {
     return res
       .status(400)
       .json({ success: false, error: 'Email y contraseña requeridos' })
+  }
+
+  if (!useDatabase && process.env.NODE_ENV === 'production') {
+    return res.status(503).json({ success: false, error: 'Servicio de autenticación no disponible' })
   }
 
   try {
@@ -120,6 +141,10 @@ authRouter.post('/change-password', authenticateJWT, async (req, res) => {
       .json({ success: false, error: 'La nueva contraseña debe tener al menos 8 caracteres' })
   }
 
+  if (!useDatabase && process.env.NODE_ENV === 'production') {
+    return res.status(503).json({ success: false, error: 'Servicio de autenticación no disponible' })
+  }
+
   try {
     // Verify current password
     let currentPasswordValid
@@ -174,13 +199,20 @@ authRouter.post('/change-password', authenticateJWT, async (req, res) => {
 })
 
 // Request password reset
-authRouter.post('/forgot-password', async (req, res) => {
+authRouter.post('/forgot-password', passwordResetLimiter, async (req, res) => {
   const { email } = req.body || {}
 
   if (!email) {
     return res
       .status(400)
       .json({ success: false, error: 'Email requerido' })
+  }
+
+  if (!useDatabase && process.env.NODE_ENV === 'production') {
+    return res.json({
+      success: true,
+      message: 'Si el email existe, recibirás un enlace para restablecer tu contraseña',
+    })
   }
 
   try {
@@ -244,7 +276,7 @@ authRouter.post('/forgot-password', async (req, res) => {
 })
 
 // Reset password with token
-authRouter.post('/reset-password', async (req, res) => {
+authRouter.post('/reset-password', passwordResetLimiter, async (req, res) => {
   const { email, token, newPassword } = req.body || {}
 
   if (!email || !token || !newPassword) {
@@ -258,6 +290,10 @@ authRouter.post('/reset-password', async (req, res) => {
     return res
       .status(400)
       .json({ success: false, error: 'La nueva contraseña debe tener al menos 8 caracteres' })
+  }
+
+  if (!useDatabase && process.env.NODE_ENV === 'production') {
+    return res.status(503).json({ success: false, error: 'Servicio de autenticación no disponible' })
   }
 
   try {
