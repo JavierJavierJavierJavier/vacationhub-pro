@@ -2,7 +2,7 @@ import express from 'express'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
 import rateLimit from 'express-rate-limit'
-import { USERS, HASHED_CREDENTIALS, CREDENTIALS, updatePassword } from './authData.js'
+import { USERS, HASHED_CREDENTIALS, updatePassword } from './authData.js'
 import { JWT_SECRET } from './config.js'
 import { authenticateJWT } from './authMiddleware.js'
 import { sendEmail } from './emailService.js'
@@ -83,14 +83,9 @@ authRouter.post('/login', loginLimiter, async (req, res) => {
 
       const emailLower = String(email).toLowerCase()
       const hashedPassword = HASHED_CREDENTIALS[emailLower]
-      const plainPassword = CREDENTIALS[emailLower]
-      
       passwordValid = false
       if (hashedPassword) {
         passwordValid = await bcrypt.compare(password, hashedPassword)
-      }
-      if (!passwordValid && plainPassword) {
-        passwordValid = plainPassword === password
       }
     }
     
@@ -152,14 +147,9 @@ authRouter.post('/change-password', authenticateJWT, async (req, res) => {
       currentPasswordValid = await userRepo.verifyPassword(userEmail, currentPassword)
     } else {
       const hashedPassword = HASHED_CREDENTIALS[userEmail]
-      const plainPassword = CREDENTIALS[userEmail]
-      
       currentPasswordValid = false
       if (hashedPassword) {
         currentPasswordValid = await bcrypt.compare(currentPassword, hashedPassword)
-      }
-      if (!currentPasswordValid && plainPassword) {
-        currentPasswordValid = plainPassword === currentPassword
       }
     }
     
