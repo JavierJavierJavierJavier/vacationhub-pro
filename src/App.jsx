@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import Layout from './components/layout/Layout'
 import LoginPage from './pages/Login.tsx'
@@ -33,6 +33,17 @@ function AdminRoute({ children }) {
 }
 
 export default function App() {
+  const location = useLocation()
+  const searchParams = new URLSearchParams(location.search)
+  const resetToken = searchParams.get('token')
+  const resetEmail = searchParams.get('email')
+  const resetFlag = searchParams.get('reset')
+
+  if (location.pathname === '/' && resetFlag === '1' && resetToken && resetEmail) {
+    const resetQuery = `?email=${encodeURIComponent(resetEmail)}&token=${encodeURIComponent(resetToken)}`
+    return <Navigate to={`/reset-password${resetQuery}`} replace />
+  }
+
   return (
     <Routes>
         <Route path="/login" element={<LoginPage />} />

@@ -209,7 +209,9 @@ authRouter.post('/forgot-password', async (req, res) => {
           ? await resetTokenRepo.createResetToken(user.email)
           : await createResetTokenMem(user.email)
         
-        const resetLink = `${process.env.APP_URL || 'http://localhost:5173'}/reset-password?email=${encodeURIComponent(user.email)}&token=${token}`
+        const appUrl = process.env.APP_URL || 'http://localhost:5173'
+        // Use root + query params to avoid SPA deep-link 404s on some hosts
+        const resetLink = `${appUrl}/?reset=1&email=${encodeURIComponent(user.email)}&token=${token}`
         
         const emailTemplate = getPasswordResetEmailTemplate({
           employeeName: user.name,
