@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -17,7 +17,7 @@ import { useEmployees } from '@/context/EmployeeContext'
 
 export default function CalendarPage() {
   const { user } = useAuth()
-  const { requests, getRequestsForDate } = useRequests()
+  const { requests, getRequestsForDate, setSelectedYear } = useRequests()
   const { employees, getEmployeeById } = useEmployees()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [showRequestModal, setShowRequestModal] = useState(false)
@@ -29,6 +29,10 @@ export default function CalendarPage() {
 
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
+
+  useEffect(() => {
+    setSelectedYear(year)
+  }, [year, setSelectedYear])
 
   const calendarDays = useMemo(() => {
     const monthStart = startOfMonth(currentDate)
