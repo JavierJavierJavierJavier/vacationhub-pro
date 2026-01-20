@@ -34,6 +34,7 @@ async function runMigration() {
   try {
     const schemaSQL = readFileSync(join(__dirname, 'schema.sql'), 'utf8')
     await query(schemaSQL)
+    await query('ALTER TABLE vacation_requests ADD COLUMN IF NOT EXISTS backup_employee_id VARCHAR(50) REFERENCES users(id)')
     console.log('✅ Esquema creado correctamente\n')
   } catch (error) {
     if (error.message.includes('already exists')) {

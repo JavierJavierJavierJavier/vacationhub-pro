@@ -19,7 +19,7 @@ requestRouter.get('/requests', authenticateJWT, async (req, res) => {
 
 requestRouter.post('/requests', authenticateJWT, async (req, res) => {
   try {
-    const { employeeId, startDate, endDate, days, type, reason } = req.body || {}
+    const { employeeId, startDate, endDate, days, type, reason, backup } = req.body || {}
     if (!employeeId || !startDate || !endDate || !days || !type) {
       return res.status(400).json({ success: false, error: 'Datos incompletos' })
     }
@@ -36,6 +36,7 @@ requestRouter.post('/requests', authenticateJWT, async (req, res) => {
       days,
       type,
       reason,
+      backup,
     })
 
     return res.json({ success: true, request })

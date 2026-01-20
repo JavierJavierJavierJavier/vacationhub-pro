@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS vacation_requests (
   reviewed_by VARCHAR(50) REFERENCES users(id),
   reviewed_at TIMESTAMP,
   rejection_reason TEXT,
+  backup_employee_id VARCHAR(50) REFERENCES users(id),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

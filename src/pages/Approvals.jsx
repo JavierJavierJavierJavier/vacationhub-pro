@@ -22,6 +22,36 @@ export default function ApprovalsPage() {
   const [requestToReject, setRequestToReject] = useState(null)
   const [rejectReason, setRejectReason] = useState('')
 
+  const isOverlap = (startA, endA, startB, endB) => {
+    return startA <= endB && startB <= endA
+  }
+
+  const getOverlapInfo = (request) => {
+    const requester = getEmployeeById(request.employeeId)
+    if (!requester) {
+      return { overlappingEmployees: [], availableCount: 0, guard: null }
+    }
+    const deptEmployees = employees.filter((e) => e.deptId === requester.deptId)
+    const approvedRequests = requests.filter((r) => r.status === 'approved')
+
+    const overlappingIds = new Set(
+      approvedRequests
+        .filter((r) =>
+          r.employeeId !== request.employeeId &&
+          deptEmployees.some((e) => e.id === r.employeeId) &&
+          isOverlap(r.startDate, r.endDate, request.startDate, request.endDate)
+        )
+        .map((r) => r.employeeId)
+    )
+
+    const overlappingEmployees = deptEmployees.filter((e) => overlappingIds.has(e.id))
+    const availableCount = Math.max(0, deptEmployees.length - 1 - overlappingEmployees.length)
+    const guard = request.backup ? deptEmployees.find((e) => e.id === request.backup) : null
+    const guardOnVacation = guard ? overlappingIds.has(guard.id) : false
+
+    return { overlappingEmployees, availableCount, guard, guardOnVacation }
+  }
+
   const pendingRequests = getPendingRequests().filter((r) => {
     const employee = getEmployeeById(r.employeeId)
     if (!employee) return false
@@ -123,6 +153,8 @@ export default function ApprovalsPage() {
             const absenceType = getAbsenceType(request.type)
             const analysis = analyzeRequest(request, requests, employees)
             const hasAlerts = analysis.alerts.length > 0 || analysis.warnings.length > 0
+            const overlapInfo = getOverlapInfo(request)
+            const overlapNames = overlapInfo.overlappingEmployees.map((e) => e.name).join(', ')
 
             return (
               <Card key={request.id} className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -158,6 +190,35 @@ export default function ApprovalsPage() {
                       </div>
                     </div>
                     <Badge variant="warning">⏳ Pendiente</Badge>
+                  </div>
+
+                  <div className="grid md:grid-cols-3 gap-3 mb-4 text-xs text-slate-600">
+                    <div className="bg-slate-50 rounded-lg p-2">
+                      <p className="font-semibold text-slate-700">Solape</p>
+                      <p>{overlapInfo.overlappingEmployees.length} persona(s)</p>
+                      {overlapNames && (
+                        <p className="text-slate-500 mt-1">{overlapNames}</p>
+                      )}
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-2">
+                      <p className="font-semibold text-slate-700">Cobertura</p>
+                      {overlapInfo.availableCount === 0 ? (
+                        <p className="text-red-600 font-semibold">⚠️ Todos de vacaciones</p>
+                      ) : (
+                        <p>{overlapInfo.availableCount} disponible(s)</p>
+                      )}
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-2">
+                      <p className="font-semibold text-slate-700">Guardia</p>
+                      {overlapInfo.guard ? (
+                        <p>
+                          {overlapInfo.guard.name}
+                          {overlapInfo.guardOnVacation ? ' (en vacaciones)' : ''}
+                        </p>
+                      ) : (
+                        <p className="text-amber-600">Sin asignar</p>
+                      )}
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">

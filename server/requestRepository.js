@@ -12,6 +12,7 @@ function normalizeRequestRow(row) {
     reason: row.reason,
     status: row.status,
     requestDate: row.requestDate,
+    backup: row.backup,
     reviewedBy: row.reviewedBy,
     reviewedAt: row.reviewedAt,
     rejectionReason: row.rejectionReason,
@@ -36,6 +37,7 @@ export async function getRequestsByYear(year, employeeId = null) {
             reason,
             status,
             request_date as "requestDate",
+            backup_employee_id as "backup",
             reviewed_by as "reviewedBy",
             reviewed_at as "reviewedAt",
             rejection_reason as "rejectionReason"
@@ -55,12 +57,13 @@ export async function createRequest({
   days,
   type,
   reason,
+  backup,
 }) {
   const id = crypto.randomUUID()
   const result = await query(
     `INSERT INTO vacation_requests
-     (id, employee_id, start_date, end_date, days, type, reason, status)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
+     (id, employee_id, start_date, end_date, days, type, reason, status, backup_employee_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8)
      RETURNING id,
                employee_id as "employeeId",
                start_date as "startDate",
@@ -70,10 +73,11 @@ export async function createRequest({
                reason,
                status,
                request_date as "requestDate",
+               backup_employee_id as "backup",
                reviewed_by as "reviewedBy",
                reviewed_at as "reviewedAt",
                rejection_reason as "rejectionReason"`,
-    [id, employeeId, startDate, endDate, days, type, reason || null]
+    [id, employeeId, startDate, endDate, days, type, reason || null, backup || null]
   )
 
   return normalizeRequestRow(result.rows[0])
@@ -105,6 +109,7 @@ export async function updateRequestStatus({
                reason,
                status,
                request_date as "requestDate",
+              backup_employee_id as "backup",
                reviewed_by as "reviewedBy",
                reviewed_at as "reviewedAt",
                rejection_reason as "rejectionReason"`,
