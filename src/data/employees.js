@@ -8,6 +8,7 @@ export const EMPLOYEES = [
   { id: 'e1', name: 'Leandro Pili', email: 'leandro.pili@alter-5.com', deptId: 'tech', role: 'employee', startDate: '2025-01-01' },
   { id: 'e2', name: 'Aaron Rodilla', email: 'aaron.rodilla@alter-5.com', deptId: 'tech', role: 'employee', startDate: '2025-09-01' },
   { id: 'e3', name: 'Lautaro Laserna', email: 'lautaro.laserna@alter-5.com', deptId: 'tech', role: 'employee', startDate: '2025-01-01' },
+  { id: 'e11', name: 'Sabrina Zanzi', email: 'sabrina.zanzi@alter5.com', deptId: 'tech', role: 'employee', startDate: null },
   { id: 'e4', name: 'Salvador Carrillo', email: 'salvador.carrillo@alter-5.com', deptId: 'sales', role: 'admin', startDate: '2025-01-01' },
   { id: 'e5', name: 'Juan Ruiz Arnal', email: 'juan.ruiz.arnal@alter-5.com', deptId: 'tech', role: 'employee', startDate: '2025-09-01' },
   { id: 'e6', name: 'Carlos Almodovar', email: 'carlos.almodovar@alter-5.com', deptId: 'sales', role: 'employee', startDate: '2025-09-01' },
