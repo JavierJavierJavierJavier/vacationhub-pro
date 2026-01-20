@@ -1,9 +1,17 @@
 import express from 'express'
+import { authenticateJWT } from './authMiddleware.js'
 import { POLICIES } from '../src/data/absenceTypes.js'
 import { calculateBalance, getDepartmentStats } from './reportUtils.js'
 import { query } from './database.js'
 
 export const reportRouter = express.Router()
+
+function requireAdmin(req, res, next) {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ success: false, error: 'Acceso solo para administradores' })
+  }
+  next()
+}
 
 async function getReportData(year) {
   const departmentsResult = await query(
@@ -40,7 +48,7 @@ async function getReportData(year) {
   }
 }
 
-reportRouter.get('/departments', (req, res) => {
+reportRouter.get('/departments', authenticateJWT, requireAdmin, (req, res) => {
   const year = Number(req.query.year) || new Date().getFullYear()
 
   getReportData(year)
@@ -64,7 +72,7 @@ reportRouter.get('/departments', (req, res) => {
     })
 })
 
-reportRouter.get('/employees', (req, res) => {
+reportRouter.get('/employees', authenticateJWT, requireAdmin, (req, res) => {
   const year = Number(req.query.year) || new Date().getFullYear()
 
   getReportData(year)

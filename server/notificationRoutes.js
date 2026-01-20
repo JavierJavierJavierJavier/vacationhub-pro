@@ -1,4 +1,5 @@
 import express from 'express'
+import { authenticateJWT } from './authMiddleware.js'
 import { sendEmail } from './emailService.js'
 import {
   getNewRequestEmailTemplate,
@@ -11,6 +12,13 @@ import { query } from './database.js'
 
 export const notificationRouter = express.Router()
 
+function requireAdmin(req, res, next) {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ success: false, error: 'Acceso solo para administradores' })
+  }
+  next()
+}
+
 async function getAdminEmails() {
   const result = await query(
     "SELECT email FROM users WHERE role = 'admin' ORDER BY email"
@@ -21,7 +29,7 @@ async function getAdminEmails() {
 /**
  * Endpoint para notificar nueva solicitud a admins
  */
-notificationRouter.post('/new-request', async (req, res) => {
+notificationRouter.post('/new-request', authenticateJWT, requireAdmin, async (req, res) => {
   try {
     const { request, employee } = req.body
     
@@ -75,7 +83,7 @@ notificationRouter.post('/new-request', async (req, res) => {
 /**
  * Endpoint para notificar aprobación al empleado
  */
-notificationRouter.post('/approved', async (req, res) => {
+notificationRouter.post('/approved', authenticateJWT, requireAdmin, async (req, res) => {
   try {
     const { request, employee, reviewerName } = req.body
     
@@ -116,7 +124,7 @@ notificationRouter.post('/approved', async (req, res) => {
 /**
  * Endpoint para notificar rechazo al empleado
  */
-notificationRouter.post('/rejected', async (req, res) => {
+notificationRouter.post('/rejected', authenticateJWT, requireAdmin, async (req, res) => {
   try {
     const { request, employee, reviewerName, rejectionReason } = req.body
     
@@ -158,7 +166,7 @@ notificationRouter.post('/rejected', async (req, res) => {
 /**
  * Endpoint para obtener todas las solicitudes (para el scheduler)
  */
-notificationRouter.get('/requests', async (_req, res) => {
+notificationRouter.get('/requests', authenticateJWT, requireAdmin, async (_req, res) => {
   try {
     const result = await query(
       `SELECT id,
@@ -181,7 +189,7 @@ notificationRouter.get('/requests', async (_req, res) => {
 /**
  * Endpoint para enviar recordatorios manualmente (para testing)
  */
-notificationRouter.post('/send-reminders', async (req, res) => {
+notificationRouter.post('/send-reminders', authenticateJWT, requireAdmin, async (req, res) => {
   try {
     const { requests, employees } = req.body
     
