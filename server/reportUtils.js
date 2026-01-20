@@ -2,7 +2,6 @@
 // Estas funciones replican la lógica de calculations.ts para evitar dependencias de TypeScript
 
 import { POLICIES } from '../src/data/absenceTypes.js'
-import { getEmployeesByDepartment, getEmployeeById } from '../src/data/employees.js'
 
 /**
  * Calcula los días de vacaciones prorrateados según fecha de incorporación
@@ -41,11 +40,11 @@ function calculateProratedDays(employeeStartDate, year) {
 /**
  * Calcula el balance de vacaciones de un empleado
  */
-export function calculateBalance(employeeId, year, requests) {
-  const employee = getEmployeeById(employeeId)
-  const employeeRequests = requests.filter(
-    (r) => r.employeeId === employeeId && r.year === year
-  )
+export function calculateBalance(employee, year, requests) {
+  const employeeRequests = requests.filter((r) => {
+    const requestYear = r.year ?? new Date(r.startDate).getFullYear()
+    return r.employeeId === employee.id && requestYear === year
+  })
 
   const used = employeeRequests
     .filter((r) => r.status === 'approved')
@@ -76,11 +75,11 @@ export function calculateBalance(employeeId, year, requests) {
 /**
  * Calcula estadísticas de un departamento
  */
-export function getDepartmentStats(department, year, requests) {
-  const employees = getEmployeesByDepartment(department.id)
+export function getDepartmentStats(department, year, requests, employees) {
+  const departmentEmployees = employees.filter((emp) => emp.deptId === department.id)
   
   // Calcular total de días prorrateados para todos los empleados del departamento
-  const totalDays = employees.reduce((sum, emp) => {
+  const totalDays = departmentEmployees.reduce((sum, emp) => {
     return sum + calculateProratedDays(emp.startDate, year)
   }, 0)
 
@@ -89,7 +88,7 @@ export function getDepartmentStats(department, year, requests) {
       (r) =>
         r.year === year &&
         r.status === 'approved' &&
-        employees.some((e) => e.id === r.employeeId)
+        departmentEmployees.some((e) => e.id === r.employeeId)
     )
     .reduce((sum, r) => sum + r.days, 0)
 
@@ -98,13 +97,13 @@ export function getDepartmentStats(department, year, requests) {
       (r) =>
         r.year === year &&
         r.status === 'pending' &&
-        employees.some((e) => e.id === r.employeeId)
+        departmentEmployees.some((e) => e.id === r.employeeId)
     )
     .reduce((sum, r) => sum + r.days, 0)
 
   return {
     ...department,
-    employeeCount: employees.length,
+    employeeCount: departmentEmployees.length,
     totalDays,
     usedDays,
     pendingDays,

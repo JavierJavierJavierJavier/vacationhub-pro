@@ -5,14 +5,8 @@ import {
   useCallback,
   ReactNode,
 } from 'react'
-import {
-  getEmployeeByEmail,
-  getDepartmentById,
-  canApprove,
-  EMPLOYEES,
-} from '@/data/employees'
+import { getDepartmentById } from '@/data/employees'
 import { useToast } from './ToastContext'
-import { useEmployees } from './EmployeeContext'
 
 export interface AuthUser {
   id: string
@@ -44,15 +38,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const { toast } = useToast()
   
-  // Intentar usar employees del contexto, con fallback a estático
-  let employees: typeof EMPLOYEES = EMPLOYEES
-  try {
-    const employeesContext = useEmployees()
-    employees = employeesContext.employees
-  } catch {
-    // Si EmployeeProvider no está disponible, usar datos estáticos
-    employees = EMPLOYEES
-  }
 
   const login = useCallback(
     async (email: string, password: string): Promise<LoginResult> => {
@@ -69,19 +54,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return { success: false, error: data.error || 'Error de autenticación' }
         }
 
-        // Usar employees del contexto dinámico, con fallback a estático
-        const employee = employees.find(e => e.email.toLowerCase() === email.toLowerCase()) || getEmployeeByEmail(email)
-        if (!employee) {
-          return { success: false, error: 'Empleado no encontrado en la app' }
-        }
-
+        const employee = data.user
         const department = getDepartmentById(employee.deptId)
         const isAdmin = employee.role === 'admin'
         const userWithDept: AuthUser = {
           ...employee,
           department,
           isAdmin,
-          canApprove: isAdmin || canApprove(employee.id, employees),
+          canApprove: isAdmin,
           token: data.token,
         }
 
@@ -95,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: 'Error de conexión' }
       }
     },
-    [toast, employees]
+    [toast]
   )
 
   const logout = useCallback(() => {

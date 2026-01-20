@@ -7,13 +7,20 @@ import {
   getRejectionEmailTemplate,
 } from './emailTemplates.js'
 import { trackRequest, markReminderSent, removeRequestTracking, getRequestTracking } from './requestStorage.js'
-import { EMPLOYEES } from '../src/data/employees.js'
+import { query } from './database.js'
 import { INITIAL_REQUESTS } from '../src/data/initialRequests.js'
 
 export const notificationRouter = express.Router()
 
 // Almacenar solicitudes en memoria (en producción usar BD)
 let allRequests = [...INITIAL_REQUESTS]
+
+async function getAdminEmails() {
+  const result = await query(
+    "SELECT email FROM users WHERE role = 'admin' ORDER BY email"
+  )
+  return result.rows.map((row) => row.email)
+}
 
 /**
  * Endpoint para notificar nueva solicitud a admins
@@ -29,9 +36,8 @@ notificationRouter.post('/new-request', async (req, res) => {
     // Registrar solicitud para tracking
     trackRequest(request.id, request.requestDate)
     
-    // Obtener todos los admins
-    const admins = EMPLOYEES.filter(e => e.role === 'admin')
-    const adminEmails = admins.map(a => a.email)
+    // Obtener todos los admins desde BD
+    const adminEmails = await getAdminEmails()
     
     if (adminEmails.length === 0) {
       return res.status(400).json({ success: false, error: 'No hay administradores configurados' })
@@ -186,8 +192,7 @@ notificationRouter.post('/send-reminders', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Datos incompletos' })
     }
     
-    const admins = EMPLOYEES.filter(e => e.role === 'admin')
-    const adminEmails = admins.map(a => a.email)
+    const adminEmails = await getAdminEmails()
     
     const results = []
     

@@ -4,10 +4,11 @@ import {
   useState,
   useCallback,
   ReactNode,
+  useEffect,
 } from 'react'
-import { EMPLOYEES as INITIAL_EMPLOYEES } from '@/data/employees'
 import { useToast } from './ToastContext'
 import { calculateProratedDays } from '@/utils/calculations'
+import { useAuth } from './AuthContext'
 import type { Employee } from '@/domain/types'
 
 interface EmployeeContextValue {
@@ -22,63 +23,138 @@ interface EmployeeContextValue {
 const EmployeeContext = createContext<EmployeeContextValue | null>(null)
 
 export function EmployeeProvider({ children }: { children: ReactNode }) {
-  const [employees, setEmployees] = useState<Employee[]>(INITIAL_EMPLOYEES as Employee[])
+  const [employees, setEmployees] = useState<Employee[]>([])
   const { toast } = useToast()
+  const { user } = useAuth()
+
+  useEffect(() => {
+    if (!user?.token) return
+    fetch('/api/employees', {
+      headers: {
+        Authorization: `Bearer ${user.token}`,
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data?.success && Array.isArray(data.employees)) {
+          setEmployees(data.employees)
+        }
+      })
+      .catch((error) => {
+        console.error('Error loading employees:', error)
+      })
+  }, [user?.token])
 
   const addEmployee = useCallback(
     (employeeData: Omit<Employee, 'id'>): Employee => {
-      // Generar ID único
-      const newId = `e${Date.now()}`
-      
+      if (!user?.token) {
+        toast.error('Necesitas iniciar sesión para agregar empleados')
+        throw new Error('Missing auth token')
+      }
+
       const newEmployee: Employee = {
-        id: newId,
+        id: `tmp-${Date.now()}`,
         ...employeeData,
         role: employeeData.role || 'employee',
       }
 
-      setEmployees((prev) => [...prev, newEmployee])
-      
-      // Calcular días prorrateados para mostrar en el toast
-      const currentYear = new Date().getFullYear()
-      const proratedDays = calculateProratedDays(employeeData.startDate, currentYear)
-      
-      toast.success(
-        `${newEmployee.name} agregado. Días de vacaciones ${currentYear}: ${proratedDays} días`
-      )
+      fetch('/api/employees', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify(employeeData),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (!data?.success || !data.employee) {
+            throw new Error(data?.error || 'No se pudo crear empleado')
+          }
+          setEmployees((prev) => [...prev, data.employee])
+          const currentYear = new Date().getFullYear()
+          const proratedDays = calculateProratedDays(employeeData.startDate, currentYear)
+          toast.success(
+            `${data.employee.name} agregado. Días de vacaciones ${currentYear}: ${proratedDays} días`
+          )
+        })
+        .catch((error) => {
+          console.error('Error creating employee:', error)
+          toast.error('No se pudo crear el empleado')
+        })
 
       return newEmployee
     },
-    [toast]
+    [toast, user?.token]
   )
 
   const updateEmployee = useCallback(
     (id: string, updates: Partial<Employee>) => {
-      setEmployees((prev) =>
-        prev.map((e) => (e.id === id ? { ...e, ...updates } : e))
-      )
-      toast.success('Empleado actualizado')
+      if (!user?.token) {
+        toast.error('Necesitas iniciar sesión para actualizar empleados')
+        return
+      }
+
+      fetch(`/api/employees/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify(updates),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (!data?.success || !data.employee) {
+            throw new Error(data?.error || 'No se pudo actualizar empleado')
+          }
+          setEmployees((prev) =>
+            prev.map((e) => (e.id === id ? { ...e, ...data.employee } : e))
+          )
+          toast.success('Empleado actualizado')
+        })
+        .catch((error) => {
+          console.error('Error updating employee:', error)
+          toast.error('No se pudo actualizar el empleado')
+        })
     },
-    [toast]
+    [toast, user?.token]
   )
 
   const deleteEmployee = useCallback(
     (id: string) => {
+      if (!user?.token) {
+        toast.error('Necesitas iniciar sesión para eliminar empleados')
+        return
+      }
       const employee = employees.find((e) => e.id === id)
-      setEmployees((prev) => prev.filter((e) => e.id !== id))
-      toast.info(`${employee?.name || 'Empleado'} eliminado`)
+      fetch(`/api/employees/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (!data?.success) {
+            throw new Error(data?.error || 'No se pudo eliminar empleado')
+          }
+          setEmployees((prev) => prev.filter((e) => e.id !== id))
+          toast.info(`${employee?.name || 'Empleado'} eliminado`)
+        })
+        .catch((error) => {
+          console.error('Error deleting employee:', error)
+          toast.error('No se pudo eliminar el empleado')
+        })
     },
-    [employees, toast]
+    [employees, toast, user?.token]
   )
 
   const promoteToAdmin = useCallback(
     (id: string) => {
-      const employee = employees.find((e) => e.id === id)
-      setEmployees((prev) =>
-        prev.map((e) => (e.id === id ? { ...e, role: 'admin' as const } : e))
-      )
-      toast.success(`${employee?.name || 'Empleado'} promovido a administrador`)
+      updateEmployee(id, { role: 'admin' })
     },
-    [employees, toast]
+    [updateEmployee]
   )
 
   const getEmployeeById = useCallback(

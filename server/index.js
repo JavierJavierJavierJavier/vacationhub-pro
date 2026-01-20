@@ -3,6 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import { PORT } from './config.js'
 import { authRouter } from './authRoutes.js'
+import { employeeRouter } from './employeeRoutes.js'
 import { reportRouter } from './reportRoutes.js'
 import { notificationRouter } from './notificationRoutes.js'
 import { verifyEmailConnection } from './emailService.js'
@@ -15,6 +16,7 @@ app.use(cors())
 app.use(express.json())
 
 app.use('/api', authRouter)
+app.use('/api', employeeRouter)
 app.use('/api/reports', reportRouter)
 app.use('/api/notifications', notificationRouter)
 
