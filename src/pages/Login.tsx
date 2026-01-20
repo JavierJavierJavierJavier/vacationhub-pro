@@ -100,26 +100,6 @@ export default function LoginPage() {
             </div>
           </form>
 
-          {/* Demo credentials */}
-          <div className="px-8 pb-6">
-            <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-              <p className="text-emerald-300/60 text-xs text-center mb-2">
-                Credenciales demo:
-              </p>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="bg-white/5 rounded-lg p-2">
-                  <p className="text-emerald-300 font-medium">👤 Empleado</p>
-                  <p className="text-white/60 truncate">javier.ruiz@alter-5.com</p>
-                  <p className="text-white/40">OcPHn41$PTRr</p>
-                </div>
-                <div className="bg-white/5 rounded-lg p-2">
-                  <p className="text-purple-300 font-medium">👑 Admin</p>
-                  <p className="text-white/60 truncate">miguel.solana@alter-5.com</p>
-                  <p className="text-white/40">!AKbfPNQ#oH$</p>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
