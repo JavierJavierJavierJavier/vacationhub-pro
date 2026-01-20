@@ -240,10 +240,14 @@ export default function CalendarPage() {
                           <span
                             key={`${day.dateString}-${r.id}`}
                             title={employee?.name || ''}
-                            className="inline-flex items-center justify-center"
-                            style={{ color: department?.color || '#10B981' }}
+                            className="inline-flex items-center justify-center rounded-full text-white"
+                            style={{
+                              backgroundColor: department?.color || '#10B981',
+                              width: 18,
+                              height: 18,
+                            }}
                           >
-                            <User className="w-3 h-3" />
+                            <User className="w-3.5 h-3.5" />
                           </span>
                         )
                       })}
