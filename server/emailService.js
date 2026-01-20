@@ -4,6 +4,7 @@ const envTrim = (value) => (typeof value === 'string' ? value.trim() : value)
 const resolvedPort = Number.parseInt(envTrim(process.env.SMTP_PORT) || '587', 10)
 const safePort = Number.isFinite(resolvedPort) ? resolvedPort : 587
 const secureFlag = envTrim(process.env.SMTP_SECURE) === 'true' || safePort === 465
+const resendApiKey = envTrim(process.env.RESEND_API_KEY)
 
 // Configuración del transporter de email
 // En producción, usar variables de entorno para credenciales reales
@@ -19,11 +20,44 @@ const transporter = nodemailer.createTransport({
   // O configurar Gmail con "App Passwords"
 })
 
+async function sendViaResend({ to, subject, html, text }) {
+  const fromEmail = envTrim(process.env.SMTP_FROM) || 'onboarding@resend.dev'
+  const payload = {
+    from: `VacationHub Alter-5 <${fromEmail}>`,
+    to,
+    subject,
+    html,
+    text,
+  }
+
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${resendApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text()
+    throw new Error(`Resend API error: ${response.status} ${errorBody}`)
+  }
+
+  const data = await response.json()
+  console.log('✅ Email enviado (Resend):', data.id)
+  return { success: true, messageId: data.id }
+}
+
 /**
  * Envía un email usando nodemailer
  */
 export async function sendEmail({ to, subject, html, text }) {
   try {
+    if (resendApiKey) {
+      return await sendViaResend({ to, subject, html, text })
+    }
+
     // En desarrollo, si no hay credenciales configuradas, solo loguear
     if (!process.env.SMTP_USER || process.env.SMTP_USER === 'noreply@alter-5.com' || !process.env.SMTP_PASS || process.env.SMTP_PASS === 'your-password-here') {
       console.log('📧 [DEV MODE] Email que se enviaría:')
@@ -56,6 +90,11 @@ export async function sendEmail({ to, subject, html, text }) {
  */
 export async function verifyEmailConnection() {
   try {
+    if (resendApiKey) {
+      console.log('✅ Servidor de email listo (Resend API)')
+      return true
+    }
+
     await transporter.verify()
     console.log('✅ Servidor de email listo')
     return true
