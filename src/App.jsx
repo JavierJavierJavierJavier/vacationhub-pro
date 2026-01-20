@@ -14,6 +14,16 @@ import SettingsPage from './pages/Settings.tsx'
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth()
+  const location = useLocation()
+  const searchParams = new URLSearchParams(location.search)
+  const resetToken = searchParams.get('token')
+  const resetEmail = searchParams.get('email')
+  const resetFlag = searchParams.get('reset')
+
+  if (location.pathname === '/' && resetFlag === '1' && resetToken && resetEmail) {
+    const resetQuery = `?email=${encodeURIComponent(resetEmail)}&token=${encodeURIComponent(resetToken)}`
+    return <Navigate to={`/reset-password${resetQuery}`} replace />
+  }
   
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
@@ -33,17 +43,6 @@ function AdminRoute({ children }) {
 }
 
 export default function App() {
-  const location = useLocation()
-  const searchParams = new URLSearchParams(location.search)
-  const resetToken = searchParams.get('token')
-  const resetEmail = searchParams.get('email')
-  const resetFlag = searchParams.get('reset')
-
-  if (location.pathname === '/' && resetFlag === '1' && resetToken && resetEmail) {
-    const resetQuery = `?email=${encodeURIComponent(resetEmail)}&token=${encodeURIComponent(resetToken)}`
-    return <Navigate to={`/reset-password${resetQuery}`} replace />
-  }
-
   return (
     <Routes>
         <Route path="/login" element={<LoginPage />} />
