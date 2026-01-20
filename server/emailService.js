@@ -1,14 +1,19 @@
 import nodemailer from 'nodemailer'
 
+const envTrim = (value) => (typeof value === 'string' ? value.trim() : value)
+const resolvedPort = Number.parseInt(envTrim(process.env.SMTP_PORT) || '587', 10)
+const safePort = Number.isFinite(resolvedPort) ? resolvedPort : 587
+const secureFlag = envTrim(process.env.SMTP_SECURE) === 'true' || safePort === 465
+
 // Configuración del transporter de email
 // En producción, usar variables de entorno para credenciales reales
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: process.env.SMTP_PORT || 587,
-  secure: false, // true para 465, false para otros puertos
+  host: envTrim(process.env.SMTP_HOST) || 'smtp.gmail.com',
+  port: safePort,
+  secure: secureFlag, // true para 465, false para otros puertos
   auth: {
-    user: process.env.SMTP_USER || 'noreply@alter-5.com',
-    pass: process.env.SMTP_PASS || 'your-password-here',
+    user: envTrim(process.env.SMTP_USER) || 'noreply@alter-5.com',
+    pass: envTrim(process.env.SMTP_PASS) || 'your-password-here',
   },
   // Para desarrollo, usar un servicio como Ethereal Email o Mailtrap
   // O configurar Gmail con "App Passwords"
