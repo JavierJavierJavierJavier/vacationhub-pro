@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, User } from 'lucide-react'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useAuth } from '@/context/AuthContext'
@@ -12,7 +12,7 @@ import FilterBar from '@/components/ui/FilterBar'
 import { getHoliday, getHolidayIcon } from '@/data/holidays'
 import { getAbsenceType, ABSENCE_TYPES } from '@/data/absenceTypes'
 import { toDateString, formatDate } from '@/utils/dateUtils'
-import { DEPARTMENTS } from '@/data/employees'
+import { DEPARTMENTS, getDepartmentById } from '@/data/employees'
 import { useEmployees } from '@/context/EmployeeContext'
 
 export default function CalendarPage() {
@@ -200,6 +200,14 @@ export default function CalendarPage() {
                 className += 'bg-red-500 text-white'
               } else if (day.isWeekend) {
                 className += 'bg-slate-100 text-slate-400 cursor-default'
+              } else if (user.isAdmin) {
+                className += 'bg-white border border-slate-200 text-slate-700 hover:border-emerald-400 hover:bg-emerald-50'
+                if (day.hasPending) {
+                  className += ' border-amber-300'
+                }
+                if (day.isToday) {
+                  className += ' ring-2 ring-blue-300 ring-offset-2'
+                }
               } else if (day.hasApproved) {
                 className += 'bg-emerald-500 text-white hover:bg-emerald-600'
               } else if (day.hasPending) {
@@ -209,6 +217,8 @@ export default function CalendarPage() {
               } else {
                 className += 'bg-white border border-slate-200 text-slate-700 hover:border-emerald-400 hover:bg-emerald-50'
               }
+
+              const approvedRequests = day.requests?.filter(r => r.status === 'approved') || []
 
               return (
                 <div
@@ -220,6 +230,24 @@ export default function CalendarPage() {
                   <span>{day.date.getDate()}</span>
                   {day.holiday && (
                     <span className="text-xs">{getHolidayIcon(day.holiday.type)}</span>
+                  )}
+                  {user.isAdmin && approvedRequests.length > 0 && (
+                    <div className="mt-1 flex flex-wrap justify-center gap-1">
+                      {approvedRequests.map((r) => {
+                        const employee = getEmployeeById(r.employeeId)
+                        const department = getDepartmentById(employee?.deptId)
+                        return (
+                          <span
+                            key={`${day.dateString}-${r.id}`}
+                            title={employee?.name || ''}
+                            className="inline-flex items-center justify-center"
+                            style={{ color: department?.color || '#10B981' }}
+                          >
+                            <User className="w-3 h-3" />
+                          </span>
+                        )
+                      })}
+                    </div>
                   )}
                 </div>
               )
