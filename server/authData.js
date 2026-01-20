@@ -52,6 +52,3 @@ export function updatePassword(email, hashedPassword) {
   // Note: In production, this should update a database, not an in-memory object
   return true
 }
-
-
-explicamel
