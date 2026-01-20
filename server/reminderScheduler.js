@@ -7,7 +7,7 @@ import {
   getRequestTracking,
   cleanupOldTracking,
 } from './requestStorage.js'
-import { EMPLOYEES } from '../src/data/employees.js'
+import { query } from './database.js'
 
 /**
  * Envía recordatorios a los admins sobre solicitudes pendientes
@@ -34,9 +34,11 @@ async function sendReminders() {
     
     console.log(`📧 Enviando ${requestsNeedingReminder.length} recordatorio(s)...`)
     
-    // Obtener admins
-    const admins = EMPLOYEES.filter(e => e.role === 'admin')
-    const adminEmails = admins.map(a => a.email)
+    const usersResult = await query(
+      'SELECT id, name, email, role FROM users'
+    )
+    const users = usersResult.rows
+    const adminEmails = users.filter((u) => u.role === 'admin').map((u) => u.email)
     
     if (adminEmails.length === 0) {
       console.warn('⚠️ No hay administradores configurados')
@@ -45,7 +47,7 @@ async function sendReminders() {
     
     // Enviar recordatorios
     for (const request of requestsNeedingReminder) {
-      const employee = EMPLOYEES.find(e => e.id === request.employeeId)
+      const employee = users.find(e => e.id === request.employeeId)
       if (!employee) continue
       
       const tracking = getRequestTracking(request.id)
