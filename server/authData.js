@@ -13,7 +13,6 @@ export const USERS = [
 ]
 
 // Hashed passwords (using bcrypt)
-// Passwords are hashed for security - original passwords are in CONTRASEÑAS_USUARIOS.md
 export const HASHED_CREDENTIALS = {
   'javier.ruiz@alter-5.com': '$2b$10$GrgefVUjltNrkXnz/NnTWudO0r2k0U/88F7qPoSWg5R.XI3YF56Tu',
   'miguel.solana@alter-5.com': '$2b$10$k37mYK3rcjC6mkKwDjDoZOAB96.RK.G0EYxHdSlmVy5ZCuQgJ7nmi',
@@ -27,29 +26,10 @@ export const HASHED_CREDENTIALS = {
   'gonzalo.degracia@alter-5.com': '$2b$10$uYBE6CG8v54lWOb0RNRacezmkswgaWeqKRWrQIatJSl440fBpIJ9e',
 }
 
-// Legacy: Keep old CREDENTIALS for backward compatibility during migration
-// TODO: Remove after confirming all users have migrated
-export const CREDENTIALS = {
-  'javier.ruiz@alter-5.com': 'OcPHn41$PTRr',
-  'miguel.solana@alter-5.com': '!AKbfPNQ#oH$',
-  'leandro.pili@alter-5.com': 'nt6rv1T3znIL',
-  'aaron.rodilla@alter-5.com': 'ASL%L1SzHtRE',
-  'lautaro.laserna@alter-5.com': 'L@%1j0D3urFZ',
-  'salvador.carrillo@alter-5.com': 'atZ9hWCjdnVF',
-  'juan.ruiz.arnal@alter-5.com': 'aa4k%rgUrt59',
-  'carlos.almodovar@alter-5.com': 'YHyRnauiUXPn',
-  'rafael.nevado@alter-5.com': 'Z6o8$ai1$sAQ',
-  'gonzalo.degracia@alter-5.com': 'anh9XO5yQCBU',
-}
-
 // Function to update password (in-memory for now, should use DB in production)
 export function updatePassword(email, hashedPassword) {
   const emailLower = email.toLowerCase()
   HASHED_CREDENTIALS[emailLower] = hashedPassword
-  // Remove plain password after hashing
-  if (CREDENTIALS[emailLower]) {
-    delete CREDENTIALS[emailLower]
-  }
   // Note: In production, this should update a database, not an in-memory object
   return true
 }

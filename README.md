@@ -37,16 +37,6 @@ Una vez ambos servidores estén corriendo:
 - Abre tu navegador en la URL que muestra Vite (normalmente `http://localhost:5173`)
 - El frontend hará proxy automático de las peticiones `/api/*` al backend en el puerto 4000
 
-### Credenciales Demo
-
-**Empleado:**
-- Email: `javier.ruiz@alter-5.com`
-- Password: `OcPHn41$PTRr`
-
-**Admin:**
-- Email: `miguel.solana@alter-5.com`
-- Password: `!AKbfPNQ#oH$`
-
 ## 📁 Estructura del Proyecto
 
 ```
@@ -79,6 +69,7 @@ vacationhub-pro/
 - `npm run build` - Genera el build de producción
 - `npm run test` - Ejecuta los tests
 - `npm run test:watch` - Ejecuta los tests en modo watch
+- `npm run import:users` - Importa usuarios desde CSV (ver `IMPORTAR_USUARIOS.md`)
 
 ## 🧪 Tests
 
@@ -109,7 +100,7 @@ npm run test
 
 ## 🔐 Autenticación
 
-El sistema usa JWT para autenticación. Las credenciales están almacenadas en el servidor (solo para demo). En producción, deberías usar una base de datos real con contraseñas hasheadas.
+El sistema usa JWT con contraseñas hasheadas en PostgreSQL. En producción es obligatorio definir `JWT_SECRET`.
 
 Ver [server/API.md](./server/API.md) para documentación completa de la API.
 
@@ -164,17 +155,12 @@ El proyecto está en proceso de migración gradual a TypeScript:
 
 ## 📚 Documentación
 
-- [API Backend](./server/API.md) - Documentación completa de endpoints
-- Código comentado y tipado
-- Tests como documentación de uso
-
-## 🚀 Próximas Mejoras
-
-- [ ] Migración completa a TypeScript
-- [ ] Tests E2E adicionales para flujos críticos
-- [ ] Mejoras en accesibilidad (a11y)
-- [ ] Optimizaciones de rendimiento
-- [ ] Internacionalización (i18n)
+- [API Backend](./server/API.md)
+- [Deploy](./DEPLOY_GUIDE.md)
+- [Checklist Producción](./CHECKLIST_PRODUCCION.md)
+- [Importar Usuarios](./IMPORTAR_USUARIOS.md)
+- [Seguridad](./docs/SECURITY_NOTES.md)
+- [Arquitectura](./docs/ARCHITECTURE.md)
 
 ## 📄 Licencia
 

@@ -5,7 +5,7 @@
 ### 1. Configuración Básica
 - [ ] Crear archivo `.env` desde `.env.example`
 - [ ] Generar `JWT_SECRET` seguro: `openssl rand -base64 32`
-- [ ] Configurar credenciales SMTP (Gmail o SendGrid)
+- [ ] Configurar emails (Resend recomendado)
 - [ ] Probar que los emails funcionan: `npm run test:email`
 
 ### 2. Build y Deploy Frontend
@@ -78,7 +78,7 @@
 ## 👥 Fase 5: Lanzamiento (1 día)
 
 ### Preparación
-- [ ] Importar todos los empleados a la BD
+- [ ] Importar todos los empleados a la BD (`IMPORTAR_USUARIOS.md`)
 - [ ] Crear credenciales iniciales para todos
 - [ ] Enviar credenciales a empleados
 - [ ] Capacitación básica (reunión o video)

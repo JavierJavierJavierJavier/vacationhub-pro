@@ -1,5 +1,4 @@
 import { POLICIES } from '@/data/absenceTypes'
-import { getEmployeesByDepartment, getEmployeeById } from '@/data/employees'
 import { getDaysUntil } from './dateUtils'
 import { parseISO, startOfYear, endOfYear } from 'date-fns'
 import type {
@@ -52,8 +51,7 @@ export const calculateBalance = (
   requests: VacationRequest[],
   employeeStartDate?: string | undefined
 ): BalanceSummary => {
-  // Si no se proporciona startDate, intentar obtenerlo del empleado estático
-  const startDate = employeeStartDate ?? getEmployeeById(employeeId)?.startDate
+  const startDate = employeeStartDate
   
   const employeeRequests = requests.filter(
     (r) => r.employeeId === employeeId && r.year === year
@@ -177,12 +175,9 @@ export const getDepartmentStats = (
   department: Department,
   year: number,
   requests: VacationRequest[],
-  allEmployees?: Array<{ id: string; deptId: string; startDate?: string; [key: string]: any }>
+  allEmployees: Array<{ id: string; deptId: string; startDate?: string; [key: string]: any }>
 ): DepartmentStats => {
-  // Si se proporcionan empleados, usarlos; si no, usar el array estático
-  const employees = allEmployees 
-    ? allEmployees.filter(e => e.deptId === department.id)
-    : getEmployeesByDepartment(department.id)
+  const employees = allEmployees.filter(e => e.deptId === department.id)
   
   // Calcular total de días prorrateados para todos los empleados del departamento
   const totalDays = employees.reduce((sum, emp) => {
