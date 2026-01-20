@@ -93,7 +93,10 @@ export function RequestProvider({ children }: { children: ReactNode }) {
         if (employee) {
           await fetch('/api/notifications/new-request', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${user.token}`,
+            },
             body: JSON.stringify({
               request: createdRequest,
               employee,
@@ -154,7 +157,10 @@ export function RequestProvider({ children }: { children: ReactNode }) {
         if (employee) {
           await fetch('/api/notifications/approved', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${user.token}`,
+            },
             body: JSON.stringify({
               request: updatedRequest,
               employee,
@@ -208,7 +214,10 @@ export function RequestProvider({ children }: { children: ReactNode }) {
         if (employee) {
           await fetch('/api/notifications/rejected', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${user.token}`,
+            },
             body: JSON.stringify({
               request: updatedRequest,
               employee,

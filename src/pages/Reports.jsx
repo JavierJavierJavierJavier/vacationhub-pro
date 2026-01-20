@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Download } from 'lucide-react'
 import { useRequests } from '@/context/RequestContext'
+import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -9,6 +10,7 @@ import { getInitials } from '@/utils/dateUtils'
 
 export default function ReportsPage() {
   const { selectedYear } = useRequests()
+  const { user } = useAuth()
   const { toast } = useToast()
   const [departmentStats, setDepartmentStats] = useState([])
   const [employeeStats, setEmployeeStats] = useState([])
@@ -19,9 +21,12 @@ export default function ReportsPage() {
     const load = async () => {
       try {
         setLoading(true)
+        const headers = user?.token
+          ? { Authorization: `Bearer ${user.token}` }
+          : {}
         const [deptRes, empRes] = await Promise.all([
-          fetch(`/api/reports/departments?year=${selectedYear}`),
-          fetch(`/api/reports/employees?year=${selectedYear}`),
+          fetch(`/api/reports/departments?year=${selectedYear}`, { headers }),
+          fetch(`/api/reports/employees?year=${selectedYear}`, { headers }),
         ])
         const deptData = await deptRes.json()
         const empData = await empRes.json()
@@ -45,7 +50,10 @@ export default function ReportsPage() {
   }, [selectedYear, toast])
 
   const handleExport = () => {
-    fetch(`/api/reports/employees?year=${selectedYear}`)
+    const headers = user?.token
+      ? { Authorization: `Bearer ${user.token}` }
+      : {}
+    fetch(`/api/reports/employees?year=${selectedYear}`, { headers })
       .then((res) => res.json())
       .then((data) => {
         if (!Array.isArray(data.employees)) {
