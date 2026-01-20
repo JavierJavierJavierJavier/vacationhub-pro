@@ -4,16 +4,14 @@ import { useRequests } from '@/context/RequestContext'
 import { useToast } from '@/context/ToastContext'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import { DEPARTMENTS, getDepartmentById } from '@/data/employees'
-import { useEmployees } from '@/context/EmployeeContext'
+import { getDepartmentById } from '@/data/employees'
 import { getInitials } from '@/utils/dateUtils'
-import { calculateBalance } from '@/utils/calculations'
 
 export default function ReportsPage() {
-  const { requests, selectedYear } = useRequests()
-  const { employees } = useEmployees()
+  const { selectedYear } = useRequests()
   const { toast } = useToast()
   const [departmentStats, setDepartmentStats] = useState([])
+  const [employeeStats, setEmployeeStats] = useState([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -21,10 +19,17 @@ export default function ReportsPage() {
     const load = async () => {
       try {
         setLoading(true)
-        const res = await fetch(`/api/reports/departments?year=${selectedYear}`)
-        const data = await res.json()
-        if (!cancelled && Array.isArray(data.departments)) {
-          setDepartmentStats(data.departments)
+        const [deptRes, empRes] = await Promise.all([
+          fetch(`/api/reports/departments?year=${selectedYear}`),
+          fetch(`/api/reports/employees?year=${selectedYear}`),
+        ])
+        const deptData = await deptRes.json()
+        const empData = await empRes.json()
+        if (!cancelled && Array.isArray(deptData.departments)) {
+          setDepartmentStats(deptData.departments)
+        }
+        if (!cancelled && Array.isArray(empData.employees)) {
+          setEmployeeStats(empData.employees)
         }
       } catch (e) {
         console.error(e)
@@ -133,14 +138,14 @@ export default function ReportsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {[...employees].sort((a, b) => {
+              {[...employeeStats].sort((a, b) => {
                 if (a.deptId === b.deptId) {
                   return a.name.localeCompare(b.name)
                 }
                 return a.deptId.localeCompare(b.deptId)
               }).map(emp => {
                 const dept = getDepartmentById(emp.deptId)
-                const balance = calculateBalance(emp.id, selectedYear, requests, emp.startDate)
+                const balance = emp.balance
                 const usage = Math.round((balance.used / balance.total) * 100)
                 
                 return (
