@@ -163,11 +163,11 @@ notificationRouter.get('/requests', async (_req, res) => {
     const result = await query(
       `SELECT id,
               employee_id as "employeeId",
-              start_date as "startDate",
-              end_date as "endDate",
+              TO_CHAR(start_date, 'YYYY-MM-DD') as "startDate",
+              TO_CHAR(end_date, 'YYYY-MM-DD') as "endDate",
               days,
               status,
-              request_date as "requestDate"
+              TO_CHAR(request_date, 'YYYY-MM-DD') as "requestDate"
        FROM vacation_requests
        WHERE status = 'pending'`
     )
