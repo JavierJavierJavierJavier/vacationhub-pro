@@ -12,6 +12,7 @@
     "migrate": "node server/migrate.js",
     "migrate:railway": "node server/railwayMigrate.js",
     "import:users": "node server/importUsers.js",
+    "seed:vacations": "node server/seedVacations.js",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:email": "node server/testEmail.js",
