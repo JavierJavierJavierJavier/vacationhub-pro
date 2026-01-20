@@ -19,6 +19,14 @@ function requireAdmin(req, res, next) {
   next()
 }
 
+function allowScheduler(req, res, next) {
+  const token = req.headers['authorization']?.replace('Bearer ', '')
+  if (token && token === process.env.INTERNAL_SCHEDULER_TOKEN) {
+    return next()
+  }
+  return authenticateJWT(req, res, () => requireAdmin(req, res, next))
+}
+
 async function getAdminEmails() {
   const result = await query(
     "SELECT email FROM users WHERE role = 'admin' ORDER BY email"
@@ -166,7 +174,7 @@ notificationRouter.post('/rejected', authenticateJWT, requireAdmin, async (req, 
 /**
  * Endpoint para obtener todas las solicitudes (para el scheduler)
  */
-notificationRouter.get('/requests', authenticateJWT, requireAdmin, async (_req, res) => {
+notificationRouter.get('/requests', allowScheduler, async (_req, res) => {
   try {
     const result = await query(
       `SELECT id,
