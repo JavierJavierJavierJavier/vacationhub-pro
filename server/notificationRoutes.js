@@ -8,12 +8,8 @@ import {
 } from './emailTemplates.js'
 import { trackRequest, markReminderSent, removeRequestTracking, getRequestTracking } from './requestStorage.js'
 import { query } from './database.js'
-import { INITIAL_REQUESTS } from '../src/data/initialRequests.js'
 
 export const notificationRouter = express.Router()
-
-// Almacenar solicitudes en memoria (en producción usar BD)
-let allRequests = [...INITIAL_REQUESTS]
 
 async function getAdminEmails() {
   const result = await query(
@@ -65,9 +61,6 @@ notificationRouter.post('/new-request', async (req, res) => {
       )
     )
     
-    // Guardar solicitud en memoria
-    allRequests.push(request)
-    
     res.json({
       success: true,
       emailsSent: results.filter(r => r.success).length,
@@ -92,12 +85,6 @@ notificationRouter.post('/approved', async (req, res) => {
     
     // Eliminar tracking (ya no necesita recordatorios)
     removeRequestTracking(request.id)
-    
-    // Actualizar solicitud en memoria
-    const index = allRequests.findIndex(r => r.id === request.id)
-    if (index !== -1) {
-      allRequests[index] = request
-    }
     
     // Crear template de email
     const emailTemplate = getApprovalEmailTemplate({
@@ -140,12 +127,6 @@ notificationRouter.post('/rejected', async (req, res) => {
     // Eliminar tracking (ya no necesita recordatorios)
     removeRequestTracking(request.id)
     
-    // Actualizar solicitud en memoria
-    const index = allRequests.findIndex(r => r.id === request.id)
-    if (index !== -1) {
-      allRequests[index] = request
-    }
-    
     // Crear template de email
     const emailTemplate = getRejectionEmailTemplate({
       employeeName: employee.name,
@@ -177,8 +158,24 @@ notificationRouter.post('/rejected', async (req, res) => {
 /**
  * Endpoint para obtener todas las solicitudes (para el scheduler)
  */
-notificationRouter.get('/requests', (req, res) => {
-  res.json({ requests: allRequests })
+notificationRouter.get('/requests', async (_req, res) => {
+  try {
+    const result = await query(
+      `SELECT id,
+              employee_id as "employeeId",
+              start_date as "startDate",
+              end_date as "endDate",
+              days,
+              status,
+              request_date as "requestDate"
+       FROM vacation_requests
+       WHERE status = 'pending'`
+    )
+    res.json({ requests: result.rows })
+  } catch (error) {
+    console.error('Error loading requests for reminders:', error)
+    res.status(500).json({ success: false, error: 'No se pudieron cargar solicitudes' })
+  }
 })
 
 /**

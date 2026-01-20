@@ -4,8 +4,8 @@ import {
   useState,
   useCallback,
   ReactNode,
+  useEffect,
 } from 'react'
-import { INITIAL_REQUESTS } from '@/data/initialRequests'
 import { useToast } from './ToastContext'
 import { useAuth } from './AuthContext'
 import { useEmployees } from './EmployeeContext'
@@ -28,24 +28,64 @@ export interface RequestContextValue {
 const RequestContext = createContext<RequestContextValue | null>(null)
 
 export function RequestProvider({ children }: { children: ReactNode }) {
-  const [requests, setRequests] = useState<VacationRequest[]>(INITIAL_REQUESTS)
-  const [selectedYear, setSelectedYear] = useState<number>(2025)
+  const [requests, setRequests] = useState<VacationRequest[]>([])
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear())
   const { toast } = useToast()
   const { user } = useAuth()
   const { getEmployeeById } = useEmployees()
+
+  useEffect(() => {
+    if (!user?.token) return
+    fetch(`/api/requests?year=${selectedYear}`, {
+      headers: {
+        Authorization: `Bearer ${user.token}`,
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data?.success && Array.isArray(data.requests)) {
+          const mapped = data.requests.map((req) => ({
+            ...req,
+            year: req.year ?? new Date(req.startDate).getFullYear(),
+          }))
+          setRequests(mapped)
+        }
+      })
+      .catch((error) => {
+        console.error('Error loading requests:', error)
+        toast.error('No se han podido cargar las solicitudes')
+      })
+  }, [user?.token, selectedYear, toast])
 
   const addRequest = useCallback(
     async (
       requestData: Omit<VacationRequest, 'id' | 'status' | 'requestDate'>
     ): Promise<VacationRequest> => {
-      const newRequest: VacationRequest = {
-        id: `r${Date.now()}`,
-        ...requestData,
-        status: 'pending',
-        requestDate: new Date().toISOString().split('T')[0],
+      if (!user?.token) {
+        toast.error('Sesión inválida')
+        throw new Error('Missing auth token')
       }
 
-      setRequests((prev) => [...prev, newRequest])
+      const response = await fetch('/api/requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify(requestData),
+      })
+
+      const data = await response.json()
+      if (!response.ok || !data?.success || !data.request) {
+        throw new Error(data?.error || 'No se pudo crear la solicitud')
+      }
+
+      const createdRequest = {
+        ...data.request,
+        year: data.request.year ?? new Date(data.request.startDate).getFullYear(),
+      }
+
+      setRequests((prev) => [...prev, createdRequest])
       
       // Enviar notificación a admins
       try {
@@ -55,7 +95,7 @@ export function RequestProvider({ children }: { children: ReactNode }) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              request: newRequest,
+              request: createdRequest,
               employee,
             }),
           })
@@ -67,9 +107,9 @@ export function RequestProvider({ children }: { children: ReactNode }) {
       
       toast.success('Solicitud enviada correctamente')
 
-      return newRequest
+      return createdRequest
     },
-    [toast, getEmployeeById]
+    [toast, getEmployeeById, user?.token]
   )
 
   const updateRequest = useCallback(
@@ -86,16 +126,27 @@ export function RequestProvider({ children }: { children: ReactNode }) {
       const request = requests.find(r => r.id === id)
       if (!request) return
 
+      const response = await fetch(`/api/requests/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify({ status: 'approved' }),
+      })
+      const data = await response.json()
+      if (!response.ok || !data?.success || !data.request) {
+        throw new Error(data?.error || 'No se pudo aprobar la solicitud')
+      }
+
       const updatedRequest: VacationRequest = {
-        ...request,
-        status: 'approved',
+        ...data.request,
+        year: data.request.year ?? new Date(data.request.startDate).getFullYear(),
         reviewer: user.name,
         reviewDate: new Date().toISOString().split('T')[0],
       }
 
-      setRequests((prev) =>
-        prev.map((r) => (r.id === id ? updatedRequest : r))
-      )
+      setRequests((prev) => prev.map((r) => (r.id === id ? updatedRequest : r)))
       
       // Enviar notificación al empleado
       try {
@@ -128,17 +179,28 @@ export function RequestProvider({ children }: { children: ReactNode }) {
       const request = requests.find(r => r.id === id)
       if (!request) return
 
+      const response = await fetch(`/api/requests/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify({ status: 'rejected', rejectionReason: reason }),
+      })
+      const data = await response.json()
+      if (!response.ok || !data?.success || !data.request) {
+        throw new Error(data?.error || 'No se pudo rechazar la solicitud')
+      }
+
       const updatedRequest: VacationRequest = {
-        ...request,
-        status: 'rejected',
+        ...data.request,
+        year: data.request.year ?? new Date(data.request.startDate).getFullYear(),
         reviewer: user.name,
         reviewDate: new Date().toISOString().split('T')[0],
         rejectionReason: reason,
       }
 
-      setRequests((prev) =>
-        prev.map((r) => (r.id === id ? updatedRequest : r))
-      )
+      setRequests((prev) => prev.map((r) => (r.id === id ? updatedRequest : r)))
       
       // Enviar notificación al empleado
       try {
@@ -167,10 +229,30 @@ export function RequestProvider({ children }: { children: ReactNode }) {
 
   const cancelRequest = useCallback(
     (id: string) => {
-      setRequests((prev) => prev.filter((r) => r.id !== id))
-      toast.success('Solicitud cancelada')
+      if (!user?.token) {
+        toast.error('Sesión inválida')
+        return
+      }
+      fetch(`/api/requests/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (!data?.success) {
+            throw new Error(data?.error || 'No se pudo cancelar la solicitud')
+          }
+          setRequests((prev) => prev.filter((r) => r.id !== id))
+          toast.success('Solicitud cancelada')
+        })
+        .catch((error) => {
+          console.error('Error cancelling request:', error)
+          toast.error('No se pudo cancelar la solicitud')
+        })
     },
-    [toast]
+    [toast, user?.token]
   )
 
   const getRequestsByEmployee = useCallback(
