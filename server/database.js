@@ -5,14 +5,19 @@
 import pg from 'pg'
 const { Pool } = pg
 
+const envTrim = (value) => (typeof value === 'string' ? value.trim() : value)
+
+const resolvedPort = Number.parseInt(envTrim(process.env.DB_PORT) || '5432', 10)
+const safePort = Number.isFinite(resolvedPort) ? resolvedPort : 5432
+
 // Configuración de la conexión
 const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'vacationhub',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
-  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  host: envTrim(process.env.DB_HOST) || 'localhost',
+  port: safePort,
+  database: envTrim(process.env.DB_NAME) || 'vacationhub',
+  user: envTrim(process.env.DB_USER) || 'postgres',
+  password: envTrim(process.env.DB_PASSWORD) || 'postgres',
+  ssl: envTrim(process.env.DB_SSL) === 'true' ? { rejectUnauthorized: false } : false,
   max: 20, // Máximo de conexiones en el pool
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
