@@ -20,8 +20,11 @@ function requireAdmin(req, res, next) {
 }
 
 function allowScheduler(req, res, next) {
-  const token = req.headers['authorization']?.replace('Bearer ', '')
-  if (token && token === process.env.INTERNAL_SCHEDULER_TOKEN) {
+  const authHeader = req.headers['authorization']
+  const headerToken = authHeader ? authHeader.replace('Bearer ', '') : ''
+  const internalHeader = req.headers['x-internal-token'] || ''
+  const token = String(internalHeader || headerToken).trim()
+  if (token && token === (process.env.INTERNAL_SCHEDULER_TOKEN || '').trim()) {
     return next()
   }
   return authenticateJWT(req, res, () => requireAdmin(req, res, next))

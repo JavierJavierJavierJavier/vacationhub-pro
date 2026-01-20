@@ -16,10 +16,14 @@ async function sendReminders() {
   try {
     // Obtener todas las solicitudes pendientes desde el endpoint interno
     const port = process.env.PORT || 4000
+    const schedulerToken = (process.env.INTERNAL_SCHEDULER_TOKEN || '').trim()
     const response = await fetch(`http://localhost:${port}/api/notifications/requests`, {
-      headers: {
-        Authorization: `Bearer ${process.env.INTERNAL_SCHEDULER_TOKEN || ''}`,
-      },
+      headers: schedulerToken
+        ? {
+            Authorization: `Bearer ${schedulerToken}`,
+            'x-internal-token': schedulerToken,
+          }
+        : undefined,
     })
     if (!response.ok) {
       console.error('Error obteniendo solicitudes:', response.statusText)
