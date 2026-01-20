@@ -239,8 +239,7 @@ export default function CalendarPage() {
                         return (
                           <span
                             key={`${day.dateString}-${r.id}`}
-                            title={employee?.name || ''}
-                            className="inline-flex items-center justify-center rounded-full text-white"
+                            className="relative inline-flex items-center justify-center rounded-full text-white group"
                             style={{
                               backgroundColor: department?.color || '#10B981',
                               width: 18,
@@ -248,6 +247,11 @@ export default function CalendarPage() {
                             }}
                           >
                             <User className="w-3.5 h-3.5" />
+                            {employee?.name && (
+                              <span className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[10px] text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                                {employee.name}
+                              </span>
+                            )}
                           </span>
                         )
                       })}
