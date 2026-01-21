@@ -21,6 +21,7 @@ export default function ApprovalsPage() {
   const [employeeFilter, setEmployeeFilter] = useState('all')
   const [requestToReject, setRequestToReject] = useState(null)
   const [rejectReason, setRejectReason] = useState('')
+  const [busyIds, setBusyIds] = useState([])
 
   const isOverlap = (startA, endA, startB, endB) => {
     return startA <= endB && startB <= endA
@@ -77,7 +78,13 @@ export default function ApprovalsPage() {
   ]
 
   const handleApprove = async (id) => {
-    await approveRequest(id)
+    if (busyIds.includes(id)) return
+    setBusyIds((prev) => [...prev, id])
+    try {
+      await approveRequest(id)
+    } finally {
+      setBusyIds((prev) => prev.filter((reqId) => reqId !== id))
+    }
   }
 
   const openRejectModal = (id) => {
@@ -87,9 +94,15 @@ export default function ApprovalsPage() {
 
   const confirmReject = async () => {
     if (requestToReject && rejectReason.trim()) {
-      await rejectRequest(requestToReject, rejectReason.trim())
-      setRequestToReject(null)
-      setRejectReason('')
+      if (busyIds.includes(requestToReject)) return
+      setBusyIds((prev) => [...prev, requestToReject])
+      try {
+        await rejectRequest(requestToReject, rejectReason.trim())
+        setRequestToReject(null)
+        setRejectReason('')
+      } finally {
+        setBusyIds((prev) => prev.filter((reqId) => reqId !== requestToReject))
+      }
     }
   }
 
@@ -253,15 +266,17 @@ export default function ApprovalsPage() {
 
                   <div className="flex gap-3 pt-4 border-t border-slate-100">
                     <button
+                      disabled={busyIds.includes(request.id)}
                       onClick={() => handleApprove(request.id)}
-                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 font-medium transition-colors"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       <CheckCircle className="w-5 h-5" />
-                      Aprobar
+                      {busyIds.includes(request.id) ? 'Aprobando...' : 'Aprobar'}
                     </button>
                     <button
+                      disabled={busyIds.includes(request.id)}
                       onClick={() => openRejectModal(request.id)}
-                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 font-medium transition-colors"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       <XCircle className="w-5 h-5" />
                       Rechazar
@@ -305,11 +320,11 @@ export default function ApprovalsPage() {
             </button>
             <button
               type="button"
-              disabled={!rejectReason.trim()}
+              disabled={!rejectReason.trim() || busyIds.includes(requestToReject)}
               onClick={confirmReject}
               className="px-4 py-2 text-sm rounded-xl bg-red-500 text-white hover:bg-red-600 disabled:bg-red-300 disabled:cursor-not-allowed"
             >
-              Rechazar solicitud
+              {busyIds.includes(requestToReject) ? 'Rechazando...' : 'Rechazar solicitud'}
             </button>
           </div>
         </div>
