@@ -83,9 +83,8 @@ requestRouter.delete('/requests/:id', authenticateJWT, async (req, res) => {
     const { id } = req.params
     const isAdmin = req.user?.role === 'admin'
     if (!isAdmin) {
-      const requests = await requestRepo.getRequestsByYear(new Date().getFullYear(), req.user?.sub)
-      const target = requests.find((r) => r.id === id)
-      if (!target || target.status !== 'pending') {
+      const target = await requestRepo.getRequestById(id)
+      if (!target || target.employeeId !== req.user?.sub || target.status !== 'pending') {
         return res.status(403).json({ success: false, error: 'No autorizado' })
       }
     }

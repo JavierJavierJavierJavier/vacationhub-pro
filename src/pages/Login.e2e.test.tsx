@@ -7,16 +7,32 @@ import { AuthProvider } from '@/context/AuthContext'
 import { ToastProvider } from '@/context/ToastContext'
 import { EmployeeProvider } from '@/context/EmployeeContext'
 
-// Mock fetch
-global.fetch = vi.fn()
+const setFetchMock = (loginResponse) => {
+  global.fetch = vi.fn((input) => {
+    const url = typeof input === 'string' ? input : input?.url || ''
+    if (url.includes('/api/login')) {
+      return Promise.resolve(loginResponse)
+    }
+    if (url.includes('/api/employees')) {
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ success: true, employees: [] }),
+      })
+    }
+    return Promise.resolve({
+      ok: true,
+      json: async () => ({ success: true }),
+    })
+  })
+}
 
 const createWrapper = () => {
   return ({ children }: { children: React.ReactNode }) => (
     <BrowserRouter>
       <ToastProvider>
-        <EmployeeProvider>
-          <AuthProvider>{children}</AuthProvider>
-        </EmployeeProvider>
+        <AuthProvider>
+          <EmployeeProvider>{children}</EmployeeProvider>
+        </AuthProvider>
       </ToastProvider>
     </BrowserRouter>
   )
@@ -25,18 +41,22 @@ const createWrapper = () => {
 describe('Login E2E', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    setFetchMock({
+      ok: true,
+      json: async () => ({ success: true }),
+    })
   })
 
   it('renders login form', () => {
     render(<LoginPage />, { wrapper: createWrapper() })
-    expect(screen.getByText('VacationHub Pro')).toBeInTheDocument()
+    expect(screen.getByText('Gestión de Vacaciones')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('tu.nombre@alter-5.com')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('••••••••')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /iniciar sesión/i })).toBeInTheDocument()
   })
 
   it('shows error on invalid credentials', async () => {
-    fetch.mockResolvedValueOnce({
+    setFetchMock({
       ok: false,
       json: async () => ({ success: false, error: 'Contraseña incorrecta' }),
     })
@@ -57,7 +77,7 @@ describe('Login E2E', () => {
   })
 
   it('successfully logs in with valid credentials', async () => {
-    fetch.mockResolvedValueOnce({
+    setFetchMock({
       ok: true,
       json: async () => ({
         success: true,
@@ -95,7 +115,22 @@ describe('Login E2E', () => {
   })
 
   it('shows loading state during login', async () => {
-    fetch.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)))
+    global.fetch = vi.fn((input) => {
+      const url = typeof input === 'string' ? input : input?.url || ''
+      if (url.includes('/api/login')) {
+        return new Promise((resolve) => setTimeout(resolve, 100))
+      }
+      if (url.includes('/api/employees')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ success: true, employees: [] }),
+        })
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ success: true }),
+      })
+    })
 
     render(<LoginPage />, { wrapper: createWrapper() })
     

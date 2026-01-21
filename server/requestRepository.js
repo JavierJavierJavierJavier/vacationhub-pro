@@ -50,6 +50,29 @@ export async function getRequestsByYear(year, employeeId = null) {
   return result.rows.map(normalizeRequestRow)
 }
 
+export async function getRequestById(id) {
+  const result = await query(
+    `SELECT id,
+            employee_id as "employeeId",
+            TO_CHAR(start_date, 'YYYY-MM-DD') as "startDate",
+            TO_CHAR(end_date, 'YYYY-MM-DD') as "endDate",
+            days,
+            type,
+            reason,
+            status,
+            TO_CHAR(request_date, 'YYYY-MM-DD') as "requestDate",
+            backup_employee_id as "backup",
+            reviewed_by as "reviewedBy",
+            reviewed_at as "reviewedAt",
+            rejection_reason as "rejectionReason"
+     FROM vacation_requests
+     WHERE id = $1`,
+    [id]
+  )
+
+  return result.rows[0] ? normalizeRequestRow(result.rows[0]) : null
+}
+
 export async function createRequest({
   employeeId,
   startDate,

@@ -31,11 +31,11 @@ vi.mock('@/context/AuthContext', async () => {
 const createWrapper = () => {
   return ({ children }: { children: React.ReactNode }) => (
     <ToastProvider>
-      <EmployeeProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <EmployeeProvider>
           <RequestProvider>{children}</RequestProvider>
-        </AuthProvider>
-      </EmployeeProvider>
+        </EmployeeProvider>
+      </AuthProvider>
     </ToastProvider>
   )
 }

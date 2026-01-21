@@ -6,9 +6,9 @@ import { EmployeeProvider } from './EmployeeContext'
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <ToastProvider>
-    <EmployeeProvider>
-      <AuthProvider>{children}</AuthProvider>
-    </EmployeeProvider>
+    <AuthProvider>
+      <EmployeeProvider>{children}</EmployeeProvider>
+    </AuthProvider>
   </ToastProvider>
 )
 
