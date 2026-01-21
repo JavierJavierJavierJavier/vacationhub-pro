@@ -39,34 +39,7 @@ export default function SettingsPage() {
           </CardBody>
         </Card>
 
-        {/* Company policies */}
-        <Card>
-          <CardHeader>
-            <span className="flex items-center gap-2">🛡️ Políticas de la Empresa</span>
-          </CardHeader>
-          <CardBody>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-slate-50 rounded-xl p-4">
-                <p className="text-2xl font-bold text-slate-800">{POLICIES.vacationDaysPerYear}</p>
-                <p className="text-sm text-slate-500">Días por año</p>
-              </div>
-              <div className="bg-slate-50 rounded-xl p-4">
-                <p className="text-2xl font-bold text-slate-800">{POLICIES.maxConsecutiveDays}</p>
-                <p className="text-sm text-slate-500">Máx. consecutivos</p>
-              </div>
-              <div className="bg-slate-50 rounded-xl p-4">
-                <p className="text-2xl font-bold text-slate-800">{POLICIES.minAdvanceDays}</p>
-                <p className="text-sm text-slate-500">Días antelación mín.</p>
-              </div>
-              <div className="bg-slate-50 rounded-xl p-4">
-                <p className="text-2xl font-bold text-slate-800">{POLICIES.maxTeamAbsencePercent}%</p>
-                <p className="text-sm text-slate-500">Máx. ausencia equipo</p>
-              </div>
-            </div>
-            
-            {/* Carry-over info removed by policy */}
-          </CardBody>
-        </Card>
+        {/* Company policies removed by policy */}
       </div>
 
       {/* Change Password */}
