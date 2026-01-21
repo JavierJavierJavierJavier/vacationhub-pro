@@ -46,7 +46,8 @@ export default function LoginPage() {
               alt="Alter5"
               className="h-24 mx-auto mb-3 object-contain"
             />
-            <p className="text-emerald-100">Sistema de Gestión de Ausencias</p>
+            <p className="text-emerald-100 font-medium">Gestión de Vacaciones</p>
+            <p className="text-emerald-100/80 text-sm mt-1">Modo relax 🌴🏄‍♂️</p>
           </div>
 
           {/* Form */}
