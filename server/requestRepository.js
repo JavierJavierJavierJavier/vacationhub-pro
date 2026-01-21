@@ -22,7 +22,7 @@ function normalizeRequestRow(row) {
 
 export async function getRequestsByYear(year, employeeId = null) {
   const params = [year]
-  let filter = 'WHERE (EXTRACT(YEAR FROM start_date) = $1 OR EXTRACT(YEAR FROM end_date) = $1)'
+  let filter = 'WHERE (EXTRACT(YEAR FROM vacation_requests.start_date) = $1 OR EXTRACT(YEAR FROM vacation_requests.end_date) = $1)'
   if (employeeId) {
     params.push(employeeId)
     filter += ` AND employee_id = $${params.length}`
@@ -31,18 +31,18 @@ export async function getRequestsByYear(year, employeeId = null) {
   const result = await query(
     `SELECT vacation_requests.id as id,
             vacation_requests.employee_id as "employeeId",
-            TO_CHAR(start_date, 'YYYY-MM-DD') as "startDate",
-            TO_CHAR(end_date, 'YYYY-MM-DD') as "endDate",
-            days,
-            type,
-            reason,
-            status,
-            TO_CHAR(request_date, 'YYYY-MM-DD') as "requestDate",
-            backup_employee_id as "backup",
+            TO_CHAR(vacation_requests.start_date, 'YYYY-MM-DD') as "startDate",
+            TO_CHAR(vacation_requests.end_date, 'YYYY-MM-DD') as "endDate",
+            vacation_requests.days,
+            vacation_requests.type,
+            vacation_requests.reason,
+            vacation_requests.status,
+            TO_CHAR(vacation_requests.request_date, 'YYYY-MM-DD') as "requestDate",
+            vacation_requests.backup_employee_id as "backup",
             reviewer.name as "reviewer",
-            reviewed_by as "reviewedBy",
-            reviewed_at as "reviewedAt",
-            rejection_reason as "rejectionReason"
+            vacation_requests.reviewed_by as "reviewedBy",
+            vacation_requests.reviewed_at as "reviewedAt",
+            vacation_requests.rejection_reason as "rejectionReason"
      FROM vacation_requests
      LEFT JOIN users reviewer ON reviewer.id = vacation_requests.reviewed_by
      ${filter}
@@ -57,18 +57,18 @@ export async function getRequestById(id) {
   const result = await query(
     `SELECT vacation_requests.id as id,
             vacation_requests.employee_id as "employeeId",
-            TO_CHAR(start_date, 'YYYY-MM-DD') as "startDate",
-            TO_CHAR(end_date, 'YYYY-MM-DD') as "endDate",
-            days,
-            type,
-            reason,
-            status,
-            TO_CHAR(request_date, 'YYYY-MM-DD') as "requestDate",
-            backup_employee_id as "backup",
+            TO_CHAR(vacation_requests.start_date, 'YYYY-MM-DD') as "startDate",
+            TO_CHAR(vacation_requests.end_date, 'YYYY-MM-DD') as "endDate",
+            vacation_requests.days,
+            vacation_requests.type,
+            vacation_requests.reason,
+            vacation_requests.status,
+            TO_CHAR(vacation_requests.request_date, 'YYYY-MM-DD') as "requestDate",
+            vacation_requests.backup_employee_id as "backup",
             reviewer.name as "reviewer",
-            reviewed_by as "reviewedBy",
-            reviewed_at as "reviewedAt",
-            rejection_reason as "rejectionReason"
+            vacation_requests.reviewed_by as "reviewedBy",
+            vacation_requests.reviewed_at as "reviewedAt",
+            vacation_requests.rejection_reason as "rejectionReason"
      FROM vacation_requests
      LEFT JOIN users reviewer ON reviewer.id = vacation_requests.reviewed_by
      WHERE id = $1`,
