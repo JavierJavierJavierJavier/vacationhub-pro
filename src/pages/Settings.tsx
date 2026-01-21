@@ -64,20 +64,7 @@ export default function SettingsPage() {
               </div>
             </div>
             
-            {/* Carry-over info */}
-            <div className="mt-6 p-4 bg-emerald-50 rounded-xl border border-emerald-100">
-              <h4 className="font-bold text-emerald-800 mb-2 flex items-center gap-2">
-                📅 Días Arrastrados (Carry-over)
-              </h4>
-              <p className="text-sm text-emerald-700 mb-2">
-                Si no gastas todos tus días de vacaciones en un año, puedes arrastrar hasta <strong>{POLICIES.carryOverLimit} días</strong> al año siguiente.
-              </p>
-              <div className="text-xs text-emerald-600 space-y-1">
-                <p>• Solo se arrastran días de vacaciones no utilizados</p>
-                <p>• Máximo {POLICIES.carryOverLimit} días pueden arrastrarse</p>
-                <p>• Los días arrastrados se suman a tus {POLICIES.vacationDaysPerYear} días base del nuevo año</p>
-              </div>
-            </div>
+            {/* Carry-over info removed by policy */}
           </CardBody>
         </Card>
       </div>
