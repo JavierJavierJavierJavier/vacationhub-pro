@@ -29,8 +29,8 @@ export async function getRequestsByYear(year, employeeId = null) {
   }
 
   const result = await query(
-    `SELECT id,
-            employee_id as "employeeId",
+    `SELECT vacation_requests.id as id,
+            vacation_requests.employee_id as "employeeId",
             TO_CHAR(start_date, 'YYYY-MM-DD') as "startDate",
             TO_CHAR(end_date, 'YYYY-MM-DD') as "endDate",
             days,
@@ -55,8 +55,8 @@ export async function getRequestsByYear(year, employeeId = null) {
 
 export async function getRequestById(id) {
   const result = await query(
-    `SELECT id,
-            employee_id as "employeeId",
+    `SELECT vacation_requests.id as id,
+            vacation_requests.employee_id as "employeeId",
             TO_CHAR(start_date, 'YYYY-MM-DD') as "startDate",
             TO_CHAR(end_date, 'YYYY-MM-DD') as "endDate",
             days,

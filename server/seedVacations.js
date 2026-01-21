@@ -1,4 +1,5 @@
 import crypto from 'crypto'
+import { pathToFileURL } from 'url'
 import { query, testConnection } from './database.js'
 
 const REVIEWER_EMAIL = process.env.REVIEWER_EMAIL || 'miguel.solana@alter-5.com'
@@ -119,17 +120,15 @@ async function insertRequest({ employeeId, startDate, endDate, days, reviewerId 
   return { status: 'created' }
 }
 
-async function seedVacations() {
+export async function seedVacations() {
   const connected = await testConnection()
   if (!connected) {
-    console.error('❌ No se pudo conectar a la base de datos')
-    process.exit(1)
+    throw new Error('No se pudo conectar a la base de datos')
   }
 
   const reviewerId = await getUserIdByEmail(REVIEWER_EMAIL)
   if (!reviewerId) {
-    console.error(`❌ Reviewer no encontrado: ${REVIEWER_EMAIL}`)
-    process.exit(1)
+    throw new Error(`Reviewer no encontrado: ${REVIEWER_EMAIL}`)
   }
 
   let created = 0
@@ -160,12 +159,18 @@ async function seedVacations() {
     }
   }
 
-  console.log('✅ Precarga completada')
-  console.log(`🆕 Creadas: ${created}`)
-  console.log(`⏭️ Omitidas: ${skipped}`)
+  return { created, skipped }
 }
 
-seedVacations().catch((error) => {
-  console.error('❌ Error precargando vacaciones:', error)
-  process.exit(1)
-})
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  seedVacations()
+    .then(({ created, skipped }) => {
+      console.log('✅ Precarga completada')
+      console.log(`🆕 Creadas: ${created}`)
+      console.log(`⏭️ Omitidas: ${skipped}`)
+    })
+    .catch((error) => {
+      console.error('❌ Error precargando vacaciones:', error)
+      process.exit(1)
+    })
+}

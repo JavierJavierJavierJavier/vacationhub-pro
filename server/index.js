@@ -9,7 +9,8 @@ import { reportRouter } from './reportRoutes.js'
 import { notificationRouter } from './notificationRoutes.js'
 import { verifyEmailConnection } from './emailService.js'
 import { startReminderScheduler } from './reminderScheduler.js'
-import { testConnection } from './database.js'
+import { testConnection, query } from './database.js'
+import { seedVacations } from './seedVacations.js'
 
 const app = express()
 app.set('trust proxy', 1)
@@ -27,10 +28,24 @@ app.use('/api/notifications', notificationRouter)
 testConnection().then(async (connected) => {
   if (connected) {
     console.log('✅ Database connection verified')
+    try {
+      const seedCheck = await query(
+        `SELECT COUNT(*)::int as count
+         FROM vacation_requests
+         WHERE reason = 'Vacaciones disfrutadas'
+           AND (EXTRACT(YEAR FROM start_date) = 2025 OR EXTRACT(YEAR FROM end_date) = 2025)`
+      )
+      if ((seedCheck.rows[0]?.count || 0) === 0) {
+        console.log('⚠️ Vacaciones históricas 2025 no encontradas, precargando...')
+        const result = await seedVacations()
+        console.log(`✅ Precarga completada: ${result.created} creadas, ${result.skipped} omitidas`)
+      }
+    } catch (error) {
+      console.error('Error comprobando precarga histórica:', error)
+    }
     // En Railway, ejecutar migración automáticamente si es necesario
     if (process.env.RAILWAY_ENVIRONMENT) {
       try {
-        const { query } = await import('./database.js')
         const result = await query('SELECT COUNT(*) FROM users')
         if (result.rows[0].count === '0') {
           console.log('⚠️ Database empty, running migration...')
