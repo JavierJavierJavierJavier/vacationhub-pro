@@ -3,6 +3,7 @@ import { useEmployees } from '@/context/EmployeeContext'
 import { useToast } from '@/context/ToastContext'
 import { DEPARTMENTS } from '@/data/employees'
 import { calculateProratedDays } from '@/utils/calculations'
+import { POLICIES } from '@/data/absenceTypes'
 import Button from '@/components/ui/Button'
 
 export default function EmployeeForm({ onClose }) {
@@ -126,7 +127,7 @@ export default function EmployeeForm({ onClose }) {
         {proratedDays !== null && startDate && (
           <p className="text-sm text-emerald-600 mt-2">
             📅 Días de vacaciones {currentYear}: <strong>{proratedDays} días</strong>
-            {proratedDays < 24 && (
+            {proratedDays < POLICIES.vacationDaysPerYear && (
               <span className="text-slate-500 ml-2">
                 (prorrateado según fecha de incorporación)
               </span>

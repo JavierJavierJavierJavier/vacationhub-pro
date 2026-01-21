@@ -11,7 +11,7 @@ import RequestForm from '@/components/features/RequestForm'
 import { getInitials } from '@/utils/dateUtils'
 import { DEPARTMENTS } from '@/data/employees'
 import { useEmployees } from '@/context/EmployeeContext'
-import { ABSENCE_TYPES } from '@/data/absenceTypes'
+import { ABSENCE_TYPES, POLICIES } from '@/data/absenceTypes'
 import { useBalance } from '@/hooks/useBalance'
 import { useTeamAvailability } from '@/hooks/useTeamAvailability'
 import { calculateBalance } from '@/utils/calculations'
@@ -181,7 +181,7 @@ export default function DashboardPage() {
                     <div className="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600"
-                        style={{ width: `${Math.min((dept.avgUsage / 24) * 100, 100)}%` }}
+                        style={{ width: `${Math.min((dept.avgUsage / POLICIES.vacationDaysPerYear) * 100, 100)}%` }}
                       />
                     </div>
                   </div>

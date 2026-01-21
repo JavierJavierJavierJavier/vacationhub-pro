@@ -23,7 +23,7 @@ export const doesAbsenceDeduct = (id) => {
 
 // Company policies
 export const POLICIES = {
-  vacationDaysPerYear: 24,
+  vacationDaysPerYear: 23,
   maxConsecutiveDays: 15,
   minAdvanceDays: 7,
   maxTeamAbsencePercent: 50,
