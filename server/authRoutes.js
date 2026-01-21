@@ -97,6 +97,7 @@ authRouter.post('/login', loginLimiter, async (req, res) => {
 
     const payload = {
       sub: user.id,
+      id: user.id,
       email: user.email,
       name: user.name,
       deptId: user.deptId || user.dept_id,
