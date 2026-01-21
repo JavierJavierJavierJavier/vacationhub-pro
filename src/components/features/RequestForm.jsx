@@ -23,6 +23,7 @@ export default function RequestForm({ onClose, preselectedType = 'vacation', pre
   const [reason, setReason] = useState('')
   const [backup, setBackup] = useState('')
   const [showCriticalAlertModal, setShowCriticalAlertModal] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     if (preselectedType) setType(preselectedType)
@@ -82,19 +83,25 @@ export default function RequestForm({ onClose, preselectedType = 'vacation', pre
   }
 
   const submitRequest = async () => {
-    await addRequest({
-      employeeId: user.id,
-      startDate,
-      endDate,
-      days: preview.days,
-      year: new Date(startDate).getFullYear(),
-      reason: reason || 'Sin especificar',
-      type,
-      backup: backup || null,
-    })
+    if (isSubmitting) return
+    setIsSubmitting(true)
+    try {
+      await addRequest({
+        employeeId: user.id,
+        startDate,
+        endDate,
+        days: preview.days,
+        year: new Date(startDate).getFullYear(),
+        reason: reason || 'Sin especificar',
+        type,
+        backup: backup || null,
+      })
 
-    setShowCriticalAlertModal(false)
-    onClose()
+      setShowCriticalAlertModal(false)
+      onClose()
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const today = new Date().toISOString().split('T')[0]
@@ -187,7 +194,9 @@ export default function RequestForm({ onClose, preselectedType = 'vacation', pre
 
       <div className="flex gap-3 pt-4">
         <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
-        <Button type="submit" disabled={preview.days === 0} className="flex-1">Enviar</Button>
+        <Button type="submit" disabled={preview.days === 0 || isSubmitting} className="flex-1">
+          {isSubmitting ? 'Enviando...' : 'Enviar'}
+        </Button>
       </div>
     </form>
 
@@ -217,9 +226,10 @@ export default function RequestForm({ onClose, preselectedType = 'vacation', pre
           </Button>
           <Button
             type="button"
+            disabled={isSubmitting}
             onClick={submitRequest}
           >
-            Continuar igualmente
+            {isSubmitting ? 'Enviando...' : 'Continuar igualmente'}
           </Button>
         </div>
       </div>
