@@ -13,6 +13,7 @@ function normalizeRequestRow(row) {
     status: row.status,
     requestDate: row.requestDate,
     backup: row.backup,
+    reviewer: row.reviewer,
     reviewedBy: row.reviewedBy,
     reviewedAt: row.reviewedAt,
     rejectionReason: row.rejectionReason,
@@ -38,10 +39,12 @@ export async function getRequestsByYear(year, employeeId = null) {
             status,
             TO_CHAR(request_date, 'YYYY-MM-DD') as "requestDate",
             backup_employee_id as "backup",
+            reviewer.name as "reviewer",
             reviewed_by as "reviewedBy",
             reviewed_at as "reviewedAt",
             rejection_reason as "rejectionReason"
      FROM vacation_requests
+     LEFT JOIN users reviewer ON reviewer.id = vacation_requests.reviewed_by
      ${filter}
      ORDER BY request_date DESC`,
     params
@@ -62,10 +65,12 @@ export async function getRequestById(id) {
             status,
             TO_CHAR(request_date, 'YYYY-MM-DD') as "requestDate",
             backup_employee_id as "backup",
+            reviewer.name as "reviewer",
             reviewed_by as "reviewedBy",
             reviewed_at as "reviewedAt",
             rejection_reason as "rejectionReason"
      FROM vacation_requests
+     LEFT JOIN users reviewer ON reviewer.id = vacation_requests.reviewed_by
      WHERE id = $1`,
     [id]
   )
@@ -97,6 +102,7 @@ export async function createRequest({
                status,
                TO_CHAR(request_date, 'YYYY-MM-DD') as "requestDate",
                backup_employee_id as "backup",
+              null as "reviewer",
                reviewed_by as "reviewedBy",
                reviewed_at as "reviewedAt",
                rejection_reason as "rejectionReason"`,
@@ -133,6 +139,7 @@ export async function updateRequestStatus({
                status,
                TO_CHAR(request_date, 'YYYY-MM-DD') as "requestDate",
                backup_employee_id as "backup",
+              (SELECT name FROM users WHERE id = reviewed_by) as "reviewer",
                reviewed_by as "reviewedBy",
                reviewed_at as "reviewedAt",
                rejection_reason as "rejectionReason"`,

@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
+import { useLocation } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useRequests } from '@/context/RequestContext'
 import { Card, CardBody } from '@/components/ui/Card'
@@ -17,11 +18,13 @@ export default function ApprovalsPage() {
   const { user } = useAuth()
   const { requests, getPendingRequests, approveRequest, rejectRequest } = useRequests()
   const { employees, getEmployeeById } = useEmployees()
+  const location = useLocation()
   const [departmentFilter, setDepartmentFilter] = useState('all')
   const [employeeFilter, setEmployeeFilter] = useState('all')
   const [requestToReject, setRequestToReject] = useState(null)
   const [rejectReason, setRejectReason] = useState('')
   const [busyIds, setBusyIds] = useState([])
+  const [requestStatusInfo, setRequestStatusInfo] = useState(null)
 
   const isOverlap = (startA, endA, startB, endB) => {
     return startA <= endB && startB <= endA
@@ -64,6 +67,42 @@ export default function ApprovalsPage() {
     }
     return true
   })
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const requestId = params.get('requestId')
+    if (!requestId) {
+      setRequestStatusInfo(null)
+      return
+    }
+
+    const match = requests.find((r) => r.id === requestId)
+    if (!match) {
+      setRequestStatusInfo({
+        severity: 'info',
+        message: 'Solicitud no encontrada',
+        detail: 'Puede que ya no esté disponible o sea de otro año.',
+      })
+      return
+    }
+
+    if (match.status === 'pending') {
+      setRequestStatusInfo({
+        severity: 'info',
+        message: 'Solicitud pendiente',
+        detail: 'La solicitud sigue pendiente de aprobación.',
+      })
+      return
+    }
+
+    const statusLabel = match.status === 'approved' ? 'aprobada' : 'rechazada'
+    const reviewerLabel = match.reviewer ? ` por ${match.reviewer}` : ''
+    setRequestStatusInfo({
+      severity: match.status === 'approved' ? 'info' : 'medium',
+      message: `Solicitud ya ${statusLabel}`,
+      detail: `Esta solicitud ya ha sido ${statusLabel}${reviewerLabel}.`,
+    })
+  }, [location.search, requests])
 
   const departmentOptions = [
     { value: 'all', label: 'Todos los equipos' },
@@ -124,6 +163,14 @@ export default function ApprovalsPage() {
   return (
     <div className="space-y-6 animate-slide-down">
       <h2 className="text-2xl font-bold text-slate-800">Aprobaciones</h2>
+
+      {requestStatusInfo && (
+        <Alert
+          message={requestStatusInfo.message}
+          detail={requestStatusInfo.detail}
+          severity={requestStatusInfo.severity}
+        />
+      )}
 
       <FilterBar
         filters={[

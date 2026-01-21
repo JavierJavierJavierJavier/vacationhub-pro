@@ -40,7 +40,7 @@ export function getNewRequestEmailTemplate({ employeeName, startDate, endDate, d
           </div>
           
           <p style="text-align: center;">
-            <a href="${process.env.APP_URL || 'http://localhost:5173'}/approvals" class="button">Ver Solicitud</a>
+            <a href="${process.env.APP_URL || 'http://localhost:5173'}/approvals?requestId=${encodeURIComponent(requestId)}" class="button">Ver Solicitud</a>
           </p>
           
           <p style="color: #EF4444; font-weight: bold; margin-top: 20px;">
@@ -69,7 +69,7 @@ Detalles:
 ${reason ? `- Motivo: ${reason}` : ''}
 
 Por favor, responde en las próximas 24 horas.
-Accede a: ${process.env.APP_URL || 'http://localhost:5173'}/approvals
+Accede a: ${process.env.APP_URL || 'http://localhost:5173'}/approvals?requestId=${encodeURIComponent(requestId)}
   `
   
   return { subject, html, text }
