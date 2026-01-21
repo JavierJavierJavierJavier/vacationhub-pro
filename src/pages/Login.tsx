@@ -41,10 +41,11 @@ export default function LoginPage() {
         <div className="bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-emerald-500 to-cyan-500 p-8 text-center">
-            <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <img src="/brand/alter5-mark.png" alt="Alter5" className="w-12 h-12 object-contain" />
-            </div>
-            <img src="/brand/alter5-wordmark.png" alt="Alter5" className="h-6 mx-auto mb-2 object-contain" />
+            <img
+              src="/brand/alter5-vertical.png"
+              alt="Alter5"
+              className="h-24 mx-auto mb-3 object-contain"
+            />
             <p className="text-emerald-100">Sistema de Gestión de Ausencias</p>
           </div>
 

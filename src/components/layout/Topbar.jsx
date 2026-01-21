@@ -18,13 +18,12 @@ export default function Topbar({ onMenuClick }) {
         </button>
         
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-sm">
-            <img src="/brand/alter5-mark.png" alt="Alter5" className="w-7 h-7 object-contain" />
-          </div>
-          <div className="hidden sm:block">
-            <img src="/brand/alter5-wordmark.png" alt="Alter5" className="h-5 object-contain" />
-            <p className="text-xs text-slate-500">VacationHub</p>
-          </div>
+          <img
+            src="/brand/alter5-horizontal.png"
+            alt="Alter5"
+            className="h-8 sm:h-9 object-contain"
+          />
+          <p className="hidden sm:block text-xs text-slate-500">VacationHub</p>
         </div>
       </div>
 
