@@ -1,6 +1,6 @@
 import { useState, FormEvent } from 'react'
 import { Navigate, Link } from 'react-router-dom'
-import { Sun, AlertCircle } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import Button from '@/components/ui/Button'
 
@@ -42,11 +42,10 @@ export default function LoginPage() {
           {/* Header */}
           <div className="bg-gradient-to-r from-emerald-500 to-cyan-500 p-8 text-center">
             <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Sun className="w-10 h-10 text-white" />
+              <img src="/brand/alter5-mark.png" alt="Alter5" className="w-12 h-12 object-contain" />
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2">VacationHub Pro</h1>
+            <img src="/brand/alter5-wordmark.png" alt="Alter5" className="h-6 mx-auto mb-2 object-contain" />
             <p className="text-emerald-100">Sistema de Gestión de Ausencias</p>
-            <p className="text-emerald-200/80 text-sm mt-1">Alter5 © 2025</p>
           </div>
 
           {/* Form */}

@@ -1,4 +1,4 @@
-import { Menu, Bell, LogOut, Sun } from 'lucide-react'
+import { Menu, Bell, LogOut } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useRequests } from '@/context/RequestContext'
 import { getInitials } from '@/utils/dateUtils'
@@ -18,14 +18,12 @@ export default function Topbar({ onMenuClick }) {
         </button>
         
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
-            <Sun className="w-5 h-5" />
+          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-sm">
+            <img src="/brand/alter5-mark.png" alt="Alter5" className="w-7 h-7 object-contain" />
           </div>
           <div className="hidden sm:block">
-            <h1 className="font-bold text-slate-800">
-              VacationHub <span className="text-primary-500 text-xs">Pro</span>
-            </h1>
-            <p className="text-xs text-slate-500">Alter5</p>
+            <img src="/brand/alter5-wordmark.png" alt="Alter5" className="h-5 object-contain" />
+            <p className="text-xs text-slate-500">VacationHub</p>
           </div>
         </div>
       </div>
