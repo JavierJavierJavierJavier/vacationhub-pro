@@ -40,7 +40,7 @@ async function getAdminEmails() {
 /**
  * Endpoint para notificar nueva solicitud a admins
  */
-notificationRouter.post('/new-request', authenticateJWT, requireAdmin, async (req, res) => {
+notificationRouter.post('/new-request', authenticateJWT, async (req, res) => {
   try {
     const { request, employee } = req.body
     
