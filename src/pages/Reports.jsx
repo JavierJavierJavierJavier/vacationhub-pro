@@ -2,21 +2,25 @@ import { useEffect, useState } from 'react'
 import { Download } from 'lucide-react'
 import { useRequests } from '@/context/RequestContext'
 import { useAuth } from '@/context/AuthContext'
+import { useEmployees } from '@/context/EmployeeContext'
 import { useToast } from '@/context/ToastContext'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import { getDepartmentById } from '@/data/employees'
 import { getInitials } from '@/utils/dateUtils'
+import { calculateBalance } from '@/utils/calculations'
 
 export default function ReportsPage() {
-  const { selectedYear } = useRequests()
+  const { requests, selectedYear } = useRequests()
   const { user } = useAuth()
+  const { getEmployeeById } = useEmployees()
   const { toast } = useToast()
   const [departmentStats, setDepartmentStats] = useState([])
   const [employeeStats, setEmployeeStats] = useState([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
+    if (!user?.isAdmin) return
     let cancelled = false
     const load = async () => {
       try {
@@ -47,9 +51,10 @@ export default function ReportsPage() {
     return () => {
       cancelled = true
     }
-  }, [selectedYear, toast])
+  }, [selectedYear, toast, user?.isAdmin, user?.token])
 
   const handleExport = () => {
+    if (!user?.isAdmin) return
     const headers = user?.token
       ? { Authorization: `Bearer ${user.token}` }
       : {}
@@ -80,6 +85,77 @@ export default function ReportsPage() {
         console.error(e)
         toast.error('No se ha podido exportar el reporte')
       })
+  }
+
+  if (!user?.isAdmin) {
+    const employee = getEmployeeById(user.id)
+    const balance = calculateBalance(user.id, selectedYear, requests, employee?.startDate)
+    const ownRequests = requests.filter(
+      (r) => r.employeeId === user.id && r.year === selectedYear
+    )
+
+    return (
+      <div className="space-y-6 animate-slide-down">
+        <h2 className="text-2xl font-bold text-slate-800">Reportes {selectedYear}</h2>
+        <Card>
+          <CardBody>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-slate-50 rounded-xl p-4">
+                <p className="text-2xl font-bold text-slate-800">{balance.total}</p>
+                <p className="text-sm text-slate-500">Días totales</p>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-4">
+                <p className="text-2xl font-bold text-slate-800">{balance.used}</p>
+                <p className="text-sm text-slate-500">Usados</p>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-4">
+                <p className="text-2xl font-bold text-slate-800">{balance.pending}</p>
+                <p className="text-sm text-slate-500">Pendientes</p>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-4">
+                <p className="text-2xl font-bold text-slate-800">{balance.available}</p>
+                <p className="text-sm text-slate-500">Disponibles</p>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader>📄 Tus solicitudes {selectedYear}</CardHeader>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-slate-500">Fecha</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-slate-500">Tipo</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-slate-500">Estado</th>
+                  <th className="px-6 py-3 text-right text-sm font-medium text-slate-500">Días</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {ownRequests.map((req) => (
+                  <tr key={req.id}>
+                    <td className="px-6 py-3 text-sm text-slate-700">
+                      {req.startDate} → {req.endDate}
+                    </td>
+                    <td className="px-6 py-3 text-sm text-slate-700">{req.type}</td>
+                    <td className="px-6 py-3 text-sm text-slate-700">{req.status}</td>
+                    <td className="px-6 py-3 text-sm text-slate-700 text-right">{req.days}</td>
+                  </tr>
+                ))}
+                {ownRequests.length === 0 && (
+                  <tr>
+                    <td className="px-6 py-4 text-sm text-slate-500" colSpan={4}>
+                      No hay solicitudes en {selectedYear}.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
+    )
   }
 
   return (
