@@ -37,12 +37,44 @@ function calculateProratedDays(employeeStartDate, year) {
   return proratedDays
 }
 
+function getRequestYear(request) {
+  if (typeof request.year === 'number') {
+    return request.year
+  }
+  return new Date(request.startDate).getFullYear()
+}
+
+function calculateCarryOver(employee, year, requests) {
+  const previousYear = year - 1
+  if (previousYear < 0) {
+    return 0
+  }
+
+  const previousYearRequests = requests.filter((r) => {
+    const requestYear = getRequestYear(r)
+    return r.employeeId === employee.id && requestYear === previousYear
+  })
+
+  const prevUsed = previousYearRequests
+    .filter((r) => r.status === 'approved')
+    .reduce((sum, r) => sum + r.days, 0)
+
+  const prevPending = previousYearRequests
+    .filter((r) => r.status === 'pending')
+    .reduce((sum, r) => sum + r.days, 0)
+
+  const prevTotal = calculateProratedDays(employee?.startDate, previousYear)
+  const remaining = prevTotal - prevUsed - prevPending
+
+  return Math.max(remaining, 0)
+}
+
 /**
  * Calcula el balance de vacaciones de un empleado
  */
 export function calculateBalance(employee, year, requests) {
   const employeeRequests = requests.filter((r) => {
-    const requestYear = r.year ?? new Date(r.startDate).getFullYear()
+    const requestYear = getRequestYear(r)
     return r.employeeId === employee.id && requestYear === year
   })
 
@@ -57,9 +89,8 @@ export function calculateBalance(employee, year, requests) {
   // Calcular días totales prorrateados según fecha de incorporación
   const proratedTotal = calculateProratedDays(employee?.startDate, year)
 
-  // No hay carry-over de 2024 - todos empiezan desde cero en 2025
-  const carryOver = 0
-  const total = proratedTotal
+  const carryOver = calculateCarryOver(employee, year, requests)
+  const total = proratedTotal + carryOver
   const available = total - used - pending
 
   return {
@@ -78,9 +109,9 @@ export function calculateBalance(employee, year, requests) {
 export function getDepartmentStats(department, year, requests, employees) {
   const departmentEmployees = employees.filter((emp) => emp.deptId === department.id)
   
-  // Calcular total de días prorrateados para todos los empleados del departamento
+  // Calcular total de días (incluyendo carry-over) para el departamento
   const totalDays = departmentEmployees.reduce((sum, emp) => {
-    return sum + calculateProratedDays(emp.startDate, year)
+    return sum + calculateBalance(emp, year, requests).total
   }, 0)
 
   const usedDays = requests

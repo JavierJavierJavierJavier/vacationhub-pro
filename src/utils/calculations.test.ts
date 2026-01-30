@@ -53,6 +53,23 @@ describe('calculations', () => {
     expect(stats.totalDays).toBeGreaterThan(0)
     expect(stats.usagePercent).toBeGreaterThanOrEqual(0)
   })
+
+  it('applies carry-over from previous year', () => {
+    const requests: VacationRequest[] = [
+      {
+        id: 'r-prev',
+        employeeId: 'e1',
+        year: 2025,
+        status: 'approved',
+        days: 10,
+        startDate: '2025-06-01',
+        endDate: '2025-06-10',
+      },
+    ]
+    const balance = calc.calculateBalance('e1', 2026, requests, '2024-01-01')
+    expect(balance.carryOver).toBe(13)
+    expect(balance.total).toBe(23 + 13)
+  })
 })
 
 
