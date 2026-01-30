@@ -36,20 +36,31 @@ export function RequestProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!user?.token) return
-    fetch(`/api/requests?year=${selectedYear}`, {
-      headers: {
-        Authorization: `Bearer ${user.token}`,
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data?.success && Array.isArray(data.requests)) {
-          const mapped = data.requests.map((req) => ({
+
+    const yearsToLoad = [selectedYear]
+    if (selectedYear > 0) {
+      yearsToLoad.push(selectedYear - 1)
+    }
+
+    Promise.all(
+      yearsToLoad.map((year) =>
+        fetch(`/api/requests?year=${year}`, {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        }).then((response) => response.json())
+      )
+    )
+      .then((responses) => {
+        const allRequests = responses
+          .flatMap((data) => (data?.success && Array.isArray(data.requests) ? data.requests : []))
+          .map((req) => ({
             ...req,
             year: req.year ?? new Date(req.startDate).getFullYear(),
           }))
-          setRequests(mapped)
-        }
+
+        const uniqueById = new Map(allRequests.map((req) => [req.id, req]))
+        setRequests(Array.from(uniqueById.values()))
       })
       .catch((error) => {
         console.error('Error loading requests:', error)

@@ -33,9 +33,10 @@ export default function DashboardPage() {
 
     const pendingCount = getPendingRequests().length
     const totalEmployees = employees.length
-    const totalRequests = requests.length
-    const approvedRequests = requests.filter(r => r.status === 'approved').length
-    const rejectedRequests = requests.filter(r => r.status === 'rejected').length
+    const requestsForYear = requests.filter((r) => r.year === selectedYear)
+    const totalRequests = requestsForYear.length
+    const approvedRequests = requestsForYear.filter(r => r.status === 'approved').length
+    const rejectedRequests = requestsForYear.filter(r => r.status === 'rejected').length
     
     // Calculate average usage per department
     const deptUsage = DEPARTMENTS.map(dept => {
