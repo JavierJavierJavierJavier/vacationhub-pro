@@ -31,8 +31,9 @@ export default function RequestsPage() {
   // Get all available years from requests
   const availableYears = useMemo(() => {
     const years = new Set(requests.map(r => r.year))
+    years.add(selectedYear)
     return Array.from(years).sort((a, b) => b - a)
-  }, [requests])
+  }, [requests, selectedYear])
 
   // Filter and search requests
   const filteredRequests = useMemo(() => {

@@ -27,9 +27,19 @@ export interface RequestContextValue {
 
 const RequestContext = createContext<RequestContextValue | null>(null)
 
+const getDefaultYear = () => {
+  const today = new Date()
+  const year = today.getFullYear()
+  // A partir del 1 de diciembre se trabaja con el siguiente año
+  if (today.getMonth() === 11) {
+    return year + 1
+  }
+  return year
+}
+
 export function RequestProvider({ children }: { children: ReactNode }) {
   const [requests, setRequests] = useState<VacationRequest[]>([])
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear())
+  const [selectedYear, setSelectedYear] = useState<number>(getDefaultYear())
   const { toast } = useToast()
   const { user } = useAuth()
   const { getEmployeeById } = useEmployees()

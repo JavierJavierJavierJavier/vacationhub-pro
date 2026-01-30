@@ -60,12 +60,15 @@ export default function DashboardPage() {
   }, [user.isAdmin, requests, getPendingRequests, selectedYear, employees])
 
   const stats = [
-    { 
-      label: 'Días Totales', 
-      value: balance.total, 
-      icon: Calendar, 
-      color: 'from-blue-500 to-blue-600', 
-      sub: balance.carryOver > 0 ? `+${balance.carryOver} arrastrados de ${balance.year - 1}` : null,
+    {
+      label: 'Días Totales',
+      value: balance.total,
+      icon: Calendar,
+      color: 'from-blue-500 to-blue-600',
+      sub:
+        balance.carryOver > 0
+          ? `${Math.max(balance.total - balance.carryOver, 0)} base ${balance.year} + ${balance.carryOver} arrastrados de ${balance.year - 1}`
+          : null,
     },
     { label: 'Disponibles', value: balance.available, icon: Check, color: 'from-emerald-500 to-emerald-600' },
     { label: 'Usados', value: balance.used, icon: Briefcase, color: 'from-amber-500 to-amber-600' },
