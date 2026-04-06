@@ -112,6 +112,8 @@ Resources:
                 Value: !Sub '${AppSecretArn}:SMTP_PASS::'
               - Name: SMTP_SECURE
                 Value: !Sub '${AppSecretArn}:SMTP_SECURE::'
+              - Name: SMTP_FROM
+                Value: !Sub '${AppSecretArn}:SMTP_FROM::'
           ImageRepositoryType: ECR
         AutoDeploymentsEnabled: true
         AuthenticationConfiguration:
