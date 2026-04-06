@@ -114,6 +114,10 @@ Resources:
                 Value: !Sub '${AppSecretArn}:SMTP_SECURE::'
               - Name: SMTP_FROM
                 Value: !Sub '${AppSecretArn}:SMTP_FROM::'
+              - Name: RESEND_API_KEY
+                Value: !Sub '${AppSecretArn}:RESEND_API_KEY::'
+              - Name: INTERNAL_SCHEDULER_TOKEN
+                Value: !Sub '${AppSecretArn}:INTERNAL_SCHEDULER_TOKEN::'
           ImageRepositoryType: ECR
         AutoDeploymentsEnabled: true
         AuthenticationConfiguration:
