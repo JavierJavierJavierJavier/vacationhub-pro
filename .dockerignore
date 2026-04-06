@@ -1,0 +1,12 @@
+node_modules
+dist
+.git
+.env
+.env.*
+*.md
+docs
+data
+*.test.*
+vitest.*
+PRUEBA_RAPIDA.sh
+setup-railway.sh

@@ -1,6 +1,8 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import { PORT } from './config.js'
 import { authRouter } from './authRoutes.js'
 import { employeeRouter } from './employeeRoutes.js'
@@ -12,17 +14,33 @@ import { startReminderScheduler } from './reminderScheduler.js'
 import { testConnection, query } from './database.js'
 import { seedVacations } from './seedVacations.js'
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
 const app = express()
 app.set('trust proxy', 1)
 
 app.use(cors())
 app.use(express.json())
 
+// Health check for App Runner
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok' })
+})
+
 app.use('/api', authRouter)
 app.use('/api', employeeRouter)
 app.use('/api', requestRouter)
 app.use('/api/reports', reportRouter)
 app.use('/api/notifications', notificationRouter)
+
+// Serve built frontend in production
+if (process.env.NODE_ENV === 'production') {
+  const distPath = path.join(__dirname, '..', 'dist')
+  app.use(express.static(distPath))
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'))
+  })
+}
 
 // Verificar conexión de base de datos al iniciar
 testConnection().then(async (connected) => {

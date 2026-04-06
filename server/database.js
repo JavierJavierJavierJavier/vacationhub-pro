@@ -7,21 +7,32 @@ const { Pool } = pg
 
 const envTrim = (value) => (typeof value === 'string' ? value.trim() : value)
 
-const resolvedPort = Number.parseInt(envTrim(process.env.DB_PORT) || '5432', 10)
-const safePort = Number.isFinite(resolvedPort) ? resolvedPort : 5432
+// Support DATABASE_URL (used by App Runner / Secrets Manager) or individual vars
+const poolConfig = process.env.DATABASE_URL
+  ? {
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
+    }
+  : (() => {
+      const resolvedPort = Number.parseInt(envTrim(process.env.DB_PORT) || '5432', 10)
+      const safePort = Number.isFinite(resolvedPort) ? resolvedPort : 5432
+      return {
+        host: envTrim(process.env.DB_HOST) || 'localhost',
+        port: safePort,
+        database: envTrim(process.env.DB_NAME) || 'vacationhub',
+        user: envTrim(process.env.DB_USER) || 'postgres',
+        password: envTrim(process.env.DB_PASSWORD) || 'postgres',
+        ssl: envTrim(process.env.DB_SSL) === 'true' ? { rejectUnauthorized: false } : false,
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 5000,
+      }
+    })()
 
-// Configuración de la conexión
-const pool = new Pool({
-  host: envTrim(process.env.DB_HOST) || 'localhost',
-  port: safePort,
-  database: envTrim(process.env.DB_NAME) || 'vacationhub',
-  user: envTrim(process.env.DB_USER) || 'postgres',
-  password: envTrim(process.env.DB_PASSWORD) || 'postgres',
-  ssl: envTrim(process.env.DB_SSL) === 'true' ? { rejectUnauthorized: false } : false,
-  max: 20, // Máximo de conexiones en el pool
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-})
+const pool = new Pool(poolConfig)
 
 // Manejo de errores del pool
 pool.on('error', (err) => {

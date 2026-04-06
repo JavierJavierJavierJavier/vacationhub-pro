@@ -48,3 +48,6 @@ Thumbs.db
 .temp/
 .tmp/
 
+# Infrastructure secrets (never commit with real values)
+infrastructure/cloudformation/populate-secrets.sh
+

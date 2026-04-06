@@ -1,0 +1,187 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  VacationHub Pro - Data Infrastructure.
+  Aurora Serverless v2 PostgreSQL cluster and supporting security groups.
+
+Parameters:
+  Environment:
+    Type: String
+    AllowedValues:
+      - prod
+    Default: prod
+    Description: Deployment environment
+
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC where all data resources live
+
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Subnets for Aurora (should span at least 2 AZs)
+
+  DBName:
+    Type: String
+    Default: vacationhub
+    Description: Database name
+
+  DBMasterUsername:
+    Type: String
+    Default: vacationhub
+    Description: Master username
+
+  MinACU:
+    Type: Number
+    Default: 0.5
+    Description: Minimum Aurora Capacity Units (0.5 = smallest, ~$43/mo when idle)
+
+  MaxACU:
+    Type: Number
+    Default: 2
+    Description: Maximum Aurora Capacity Units (scales up under load)
+
+Resources:
+  # ============================================================
+  # Security Groups
+  # ============================================================
+
+  AppRunnerEgressSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      GroupName: !Sub 'vacationhub-apprunner-egress-${Environment}'
+      GroupDescription: !Sub 'App Runner VPC Connector egress SG for ${Environment}'
+      VpcId: !Ref VpcId
+      Tags:
+        - Key: Name
+          Value: !Sub 'vacationhub-apprunner-egress-${Environment}'
+        - Key: Project
+          Value: vacationhub
+        - Key: Environment
+          Value: !Ref Environment
+
+  DataSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      GroupName: !Sub 'vacationhub-data-${Environment}'
+      GroupDescription: !Sub 'Data-layer SG for ${Environment} - PostgreSQL 5432 from App Runner'
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref AppRunnerEgressSecurityGroup
+          Description: PostgreSQL from App Runner
+      Tags:
+        - Key: Name
+          Value: !Sub 'vacationhub-data-${Environment}'
+        - Key: Project
+          Value: vacationhub
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ============================================================
+  # Subnet Group
+  # ============================================================
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      DBSubnetGroupName: !Sub 'vacationhub-db-${Environment}'
+      DBSubnetGroupDescription: !Sub 'Aurora subnet group for ${Environment}'
+      SubnetIds: !Ref SubnetIds
+      Tags:
+        - Key: Project
+          Value: vacationhub
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ============================================================
+  # Aurora Serverless v2 PostgreSQL
+  # ============================================================
+
+  AuroraCluster:
+    Type: AWS::RDS::DBCluster
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      DBClusterIdentifier: !Sub 'vacationhub-${Environment}'
+      Engine: aurora-postgresql
+      EngineVersion: '16.4'
+      DatabaseName: !Ref DBName
+      MasterUsername: !Ref DBMasterUsername
+      ManageMasterUserPassword: true
+      ServerlessV2ScalingConfiguration:
+        MinCapacity: !Ref MinACU
+        MaxCapacity: !Ref MaxACU
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      VpcSecurityGroupIds:
+        - !Ref DataSecurityGroup
+      StorageEncrypted: true
+      DeletionProtection: true
+      BackupRetentionPeriod: 7
+      CopyTagsToSnapshot: true
+      EnableCloudwatchLogsExports:
+        - postgresql
+      Tags:
+        - Key: Project
+          Value: vacationhub
+        - Key: Environment
+          Value: !Ref Environment
+
+  AuroraInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub 'vacationhub-${Environment}-1'
+      DBClusterIdentifier: !Ref AuroraCluster
+      DBInstanceClass: db.serverless
+      Engine: aurora-postgresql
+      PubliclyAccessible: false
+      Tags:
+        - Key: Project
+          Value: vacationhub
+        - Key: Environment
+          Value: !Ref Environment
+
+Outputs:
+  AppRunnerEgressSecurityGroupId:
+    Description: SG ID to assign to App Runner VPC Connector
+    Value: !Ref AppRunnerEgressSecurityGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-AppRunnerEgressSG'
+
+  DataSecurityGroupId:
+    Description: SG ID assigned to Aurora
+    Value: !Ref DataSecurityGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-DataSG'
+
+  DBSubnetGroupName:
+    Description: Aurora subnet group name
+    Value: !Ref DBSubnetGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-DBSubnetGroup'
+
+  ClusterEndpoint:
+    Description: Aurora cluster writer endpoint
+    Value: !GetAtt AuroraCluster.Endpoint.Address
+    Export:
+      Name: !Sub '${AWS::StackName}-ClusterEndpoint'
+
+  ClusterPort:
+    Description: Aurora cluster port
+    Value: !GetAtt AuroraCluster.Endpoint.Port
+
+  ClusterReaderEndpoint:
+    Description: Aurora cluster reader endpoint
+    Value: !GetAtt AuroraCluster.ReadEndpoint.Address
+
+  MasterSecretArn:
+    Description: ARN of the AWS-managed master user secret
+    Value: !GetAtt AuroraCluster.MasterUserSecret.SecretArn
+    Export:
+      Name: !Sub '${AWS::StackName}-MasterSecretArn'

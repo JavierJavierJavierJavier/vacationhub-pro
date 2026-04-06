@@ -1,0 +1,143 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  VacationHub Pro - App Runner Service.
+  Single service serving both API and frontend.
+  NOTE: ECR repo and Secrets Manager secret are managed outside this stack.
+
+Parameters:
+  Environment:
+    Type: String
+    AllowedValues:
+      - prod
+    Default: prod
+    Description: Deployment environment
+
+  VpcId:
+    Type: String
+    Default: ''
+    Description: VPC ID for App Runner VPC Connector (required for Aurora access)
+
+  SubnetIds:
+    Type: CommaDelimitedList
+    Default: ''
+    Description: Comma-separated subnet IDs for VPC Connector
+
+  SecurityGroupIds:
+    Type: CommaDelimitedList
+    Default: ''
+    Description: Comma-separated security group IDs for VPC Connector
+
+  AppUrl:
+    Type: String
+    Default: ''
+    Description: Public URL of the app (used for email links)
+
+  AppSecretArn:
+    Type: String
+    Description: ARN of the pre-existing Secrets Manager secret
+
+Conditions:
+  HasVpcConfig: !Not [!Equals [!Ref VpcId, '']]
+
+Resources:
+  # ============================================================
+  # IAM Role & Policy for App Runner
+  # ============================================================
+  AppRunnerInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'vacationhub-apprunner-instance-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: tasks.apprunner.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub 'vacationhub-secrets-access-${Environment}'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource:
+                  - !Ref AppSecretArn
+
+  # ============================================================
+  # VPC Connector (for App Runner to reach Aurora in VPC)
+  # ============================================================
+  VpcConnector:
+    Type: AWS::AppRunner::VpcConnector
+    Condition: HasVpcConfig
+    Properties:
+      VpcConnectorName: !Sub 'vacationhub-vpc-connector-${Environment}'
+      Subnets: !Ref SubnetIds
+      SecurityGroups: !Ref SecurityGroupIds
+
+  # ============================================================
+  # App Runner Service
+  # ============================================================
+  AppRunnerService:
+    Type: AWS::AppRunner::Service
+    Properties:
+      ServiceName: !Sub 'vacationhub-${Environment}'
+      SourceConfiguration:
+        ImageRepository:
+          ImageIdentifier: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/vacationhub-${Environment}:latest'
+          ImageConfiguration:
+            Port: '8080'
+            RuntimeEnvironmentVariables:
+              - Name: PORT
+                Value: '8080'
+              - Name: NODE_ENV
+                Value: production
+              - Name: APP_URL
+                Value: !Ref AppUrl
+            RuntimeEnvironmentSecrets:
+              - Name: DATABASE_URL
+                Value: !Sub '${AppSecretArn}:DATABASE_URL::'
+              - Name: JWT_SECRET
+                Value: !Sub '${AppSecretArn}:JWT_SECRET::'
+              - Name: SMTP_HOST
+                Value: !Sub '${AppSecretArn}:SMTP_HOST::'
+              - Name: SMTP_PORT
+                Value: !Sub '${AppSecretArn}:SMTP_PORT::'
+              - Name: SMTP_USER
+                Value: !Sub '${AppSecretArn}:SMTP_USER::'
+              - Name: SMTP_PASS
+                Value: !Sub '${AppSecretArn}:SMTP_PASS::'
+              - Name: SMTP_SECURE
+                Value: !Sub '${AppSecretArn}:SMTP_SECURE::'
+          ImageRepositoryType: ECR
+        AutoDeploymentsEnabled: true
+        AuthenticationConfiguration:
+          AccessRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/service-role/AppRunnerECRAccessRole'
+      InstanceConfiguration:
+        Cpu: '512'
+        Memory: '1024'
+        InstanceRoleArn: !GetAtt AppRunnerInstanceRole.Arn
+      HealthCheckConfiguration:
+        Protocol: HTTP
+        Path: /api/health
+        Interval: 15
+        Timeout: 10
+        HealthyThreshold: 1
+        UnhealthyThreshold: 10
+      NetworkConfiguration:
+        EgressConfiguration:
+          EgressType: !If [HasVpcConfig, 'VPC', 'DEFAULT']
+          VpcConnectorArn: !If [HasVpcConfig, !GetAtt VpcConnector.VpcConnectorArn, !Ref 'AWS::NoValue']
+        IngressConfiguration:
+          IsPubliclyAccessible: true
+        IpAddressType: IPV4
+
+Outputs:
+  ServiceUrl:
+    Description: App Runner Service URL
+    Value: !GetAtt AppRunnerService.ServiceUrl
+
+  EcrUri:
+    Description: ECR Repository URI (managed outside this stack)
+    Value: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/vacationhub-${Environment}'
