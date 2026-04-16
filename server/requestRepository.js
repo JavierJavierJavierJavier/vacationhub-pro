@@ -78,6 +78,14 @@ export async function getRequestById(id) {
   return result.rows[0] ? normalizeRequestRow(result.rows[0]) : null
 }
 
+export class RequestOverlapError extends Error {
+  constructor(existing) {
+    super('Request overlaps an existing pending or approved request')
+    this.code = 'REQUEST_OVERLAP'
+    this.existing = existing
+  }
+}
+
 export async function createRequest({
   employeeId,
   startDate,
@@ -87,6 +95,23 @@ export async function createRequest({
   reason,
   backup,
 }) {
+  const overlap = await query(
+    `SELECT id,
+            TO_CHAR(start_date, 'YYYY-MM-DD') as "startDate",
+            TO_CHAR(end_date, 'YYYY-MM-DD') as "endDate",
+            status
+     FROM vacation_requests
+     WHERE employee_id = $1
+       AND status IN ('pending', 'approved')
+       AND start_date <= $3
+       AND end_date >= $2
+     LIMIT 1`,
+    [employeeId, startDate, endDate]
+  )
+  if (overlap.rows.length > 0) {
+    throw new RequestOverlapError(overlap.rows[0])
+  }
+
   const id = crypto.randomUUID()
   const result = await query(
     `INSERT INTO vacation_requests

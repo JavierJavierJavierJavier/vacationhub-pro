@@ -25,17 +25,17 @@ async function getReportData(year) {
   const requestsResult = await query(
     `SELECT id,
             employee_id as "employeeId",
-            start_date as "startDate",
-            end_date as "endDate",
+            TO_CHAR(start_date, 'YYYY-MM-DD') as "startDate",
+            TO_CHAR(end_date, 'YYYY-MM-DD') as "endDate",
             days,
             type,
             reason,
             status,
             request_date as "requestDate"
      FROM vacation_requests
-     WHERE EXTRACT(YEAR FROM start_date) = $1
-        OR EXTRACT(YEAR FROM end_date) = $1`,
-    [year]
+     WHERE EXTRACT(YEAR FROM start_date) IN ($1, $2)
+        OR EXTRACT(YEAR FROM end_date) IN ($1, $2)`,
+    [year, year - 1]
   )
 
   return {
@@ -43,7 +43,7 @@ async function getReportData(year) {
     employees: employeesResult.rows,
     requests: requestsResult.rows.map((request) => ({
       ...request,
-      year,
+      year: new Date(request.startDate).getUTCFullYear(),
     })),
   }
 }

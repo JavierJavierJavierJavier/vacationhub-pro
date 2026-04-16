@@ -62,37 +62,21 @@ authRouter.post('/login', loginLimiter, async (req, res) => {
     let user, passwordValid
 
     if (useDatabase) {
-      // Use database
       user = await userRepo.getUserByEmail(email)
-      if (!user) {
-        return res
-          .status(401)
-          .json({ success: false, error: 'Email no encontrado' })
-      }
-      passwordValid = await userRepo.verifyPassword(email, password)
+      passwordValid = user ? await userRepo.verifyPassword(email, password) : false
     } else {
-      // Fallback to in-memory data
       user = USERS.find(
         (u) => u.email.toLowerCase() === String(email).toLowerCase()
       )
-      if (!user) {
-        return res
-          .status(401)
-          .json({ success: false, error: 'Email no encontrado' })
-      }
-
       const emailLower = String(email).toLowerCase()
       const hashedPassword = HASHED_CREDENTIALS[emailLower]
-      passwordValid = false
-      if (hashedPassword) {
-        passwordValid = await bcrypt.compare(password, hashedPassword)
-      }
+      passwordValid = hashedPassword ? await bcrypt.compare(password, hashedPassword) : false
     }
-    
-    if (!passwordValid) {
+
+    if (!user || !passwordValid) {
       return res
         .status(401)
-        .json({ success: false, error: 'Contraseña incorrecta' })
+        .json({ success: false, error: 'Credenciales inválidas' })
     }
 
     const payload = {

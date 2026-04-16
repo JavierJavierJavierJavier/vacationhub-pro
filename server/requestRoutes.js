@@ -41,6 +41,13 @@ requestRouter.post('/requests', authenticateJWT, async (req, res) => {
 
     return res.json({ success: true, request })
   } catch (error) {
+    if (error instanceof requestRepo.RequestOverlapError) {
+      return res.status(409).json({
+        success: false,
+        error: 'Ya tienes una solicitud de vacaciones que se solapa con esas fechas',
+        existing: error.existing,
+      })
+    }
     console.error('Error creating request:', error)
     return res.status(500).json({ success: false, error: 'No se pudo crear la solicitud' })
   }
