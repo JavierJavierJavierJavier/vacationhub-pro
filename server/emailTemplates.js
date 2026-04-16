@@ -281,7 +281,9 @@ Si tienes alguna pregunta, por favor contacta con ${reviewerName}.
 
 
 export function getPasswordResetEmailTemplate({ employeeName, resetLink }) {
-  const subject = `🔒 Restablecer tu contraseña - VacationHub`
+  const subject = `Restablecer tu contraseña`
+  const appUrl = process.env.APP_URL || 'http://localhost:5173'
+  const logoUrl = `${appUrl}/brand/alter5-wordmark.png`
 
   const html = `
     <!DOCTYPE html>
@@ -289,78 +291,66 @@ export function getPasswordResetEmailTemplate({ employeeName, resetLink }) {
     <head>
       <meta charset="utf-8">
       <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; }
-        .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
-        .info-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #6366F1; }
-        .button { display: inline-block; padding: 12px 24px; background: #6366F1; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0; }
-        .warning-box { background: #FEF3C7; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #F59E0B; }
-        .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 12px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; line-height: 1.6; color: #1a1a1a; background: #f5f6f8; margin: 0; padding: 0; }
+        .wrapper { background: #f5f6f8; padding: 40px 20px; }
+        .container { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; }
+        .header { background: #ffffff; padding: 48px 40px 36px; text-align: center; border-bottom: 1px solid #f0f1f3; }
+        .header img { height: 110px; display: inline-block; max-width: 360px; }
+        .content { padding: 40px; color: #1a1a1a; }
+        .content h1 { font-size: 20px; font-weight: 600; margin: 0 0 20px; color: #0A1628; letter-spacing: -0.01em; }
+        .content p { font-size: 15px; margin: 0 0 16px; color: #374151; }
+        .button-row { margin: 32px 0; }
+        .button { display: inline-block; padding: 12px 28px; background: #0A1628; color: #ffffff !important; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 15px; }
+        .button:hover { background: #1a2940; }
+        .link-fallback { font-size: 13px; color: #6b7280; margin-top: 12px; word-break: break-all; }
+        .divider { height: 1px; background: #e5e7eb; margin: 28px 0; border: 0; }
+        .meta { font-size: 13px; color: #6b7280; }
+        .meta strong { color: #374151; font-weight: 600; }
+        .footer { padding: 24px 40px; text-align: center; border-top: 1px solid #e5e7eb; background: #fafafa; }
+        .footer p { font-size: 12px; color: #9ca3af; margin: 0; line-height: 1.5; }
       </style>
     </head>
     <body>
-      <div class="container">
-        <div class="header">
-          <h1>🔒 Restablecer Contraseña</h1>
-        </div>
-        <div class="content">
-          <p>Hola <strong>${employeeName}</strong>,</p>
-          <p>Recibimos una solicitud para restablecer la contraseña de tu cuenta en VacationHub.</p>
-
-          <div class="info-box">
-            <p>Si solicitaste este cambio, haz click en el botón de abajo para crear una nueva contraseña:</p>
-            <p style="text-align: center;">
-              <a href="${resetLink}" class="button">Restablecer Contraseña</a>
-            </p>
-            <p style="font-size: 12px; color: #6b7280; margin-top: 15px;">
-              O copia y pega este enlace en tu navegador:<br>
-              <span style="word-break: break-all;">${resetLink}</span>
-            </p>
+      <div class="wrapper">
+        <div class="container">
+          <div class="header">
+            <img src="${logoUrl}" alt="Alter5">
           </div>
-
-          <div class="warning-box">
-            <p><strong>⚠️ Importante:</strong></p>
-            <ul style="margin: 10px 0; padding-left: 20px;">
-              <li>Este enlace expira en <strong>1 hora</strong></li>
-              <li>Si no solicitaste este cambio, ignora este email</li>
-              <li>Tu contraseña actual seguirá siendo válida</li>
-            </ul>
+          <div class="content">
+            <h1>Restablecer contraseña</h1>
+            <p>Hola ${employeeName},</p>
+            <p>Hemos recibido una solicitud para restablecer la contraseña de tu cuenta en el portal de vacaciones de Alter5.</p>
+            <div class="button-row">
+              <a href="${resetLink}" class="button">Restablecer contraseña</a>
+              <p class="link-fallback">Si el botón no funciona, copia este enlace en tu navegador:<br>${resetLink}</p>
+            </div>
+            <hr class="divider">
+            <p class="meta">Este enlace caduca en <strong>1 hora</strong>. Si no has solicitado este cambio, puedes ignorar este correo — tu contraseña actual seguirá siendo válida.</p>
           </div>
-
-          <p style="color: #6b7280; font-size: 14px;">
-            Si tienes problemas, contacta al administrador del sistema.
-          </p>
-        </div>
-        <div class="footer">
-          <p>VacationHub - Alter-5</p>
-          <p>Este es un email automático, por favor no responder.</p>
+          <div class="footer">
+            <p>Alter5 &middot; Portal de Vacaciones</p>
+            <p>Mensaje automático, por favor no responder.</p>
+          </div>
         </div>
       </div>
     </body>
     </html>
   `
 
-  const text = `
-Restablecer Contraseña - VacationHub
+  const text = `Alter5 · Portal de Vacaciones
 
 Hola ${employeeName},
 
-Recibimos una solicitud para restablecer la contraseña de tu cuenta en VacationHub.
+Hemos recibido una solicitud para restablecer la contraseña de tu cuenta.
 
-Si solicitaste este cambio, visita el siguiente enlace:
+Abre el siguiente enlace para establecer una nueva contraseña:
 ${resetLink}
 
-⚠️ IMPORTANTE:
-- Este enlace expira en 1 hora
-- Si no solicitaste este cambio, ignora este email
-- Tu contraseña actual seguirá siendo válida
+Este enlace caduca en 1 hora. Si no has solicitado este cambio, puedes ignorar este correo; tu contraseña actual seguirá siendo válida.
 
-Si tienes problemas, contacta al administrador del sistema.
-
-VacationHub - Alter-5
-Este es un email automático, por favor no responder.
-  `
+—
+Alter5
+Mensaje automático, por favor no responder.`
 
   return { subject, html, text }
 }
