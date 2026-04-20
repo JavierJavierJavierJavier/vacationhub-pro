@@ -12,7 +12,7 @@ import { query } from './database.js'
 /**
  * Envía recordatorios a los admins sobre solicitudes pendientes
  */
-async function sendReminders() {
+export async function sendReminders() {
   try {
     // Obtener todas las solicitudes pendientes desde el endpoint interno
     const port = process.env.PORT || 4000

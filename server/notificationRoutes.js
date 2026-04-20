@@ -9,6 +9,7 @@ import {
 } from './emailTemplates.js'
 import { trackRequest, markReminderSent, removeRequestTracking, getRequestTracking } from './requestStorage.js'
 import { query } from './database.js'
+import { sendReminders } from './reminderScheduler.js'
 
 export const notificationRouter = express.Router()
 
@@ -194,6 +195,21 @@ notificationRouter.get('/requests', allowScheduler, async (_req, res) => {
   } catch (error) {
     console.error('Error loading requests for reminders:', error)
     res.status(500).json({ success: false, error: 'No se pudieron cargar solicitudes' })
+  }
+})
+
+/**
+ * Endpoint disparable por cron externo (cron-job.org, etc) con INTERNAL_SCHEDULER_TOKEN.
+ * Despierta a Render y ejecuta el ciclo de recordatorios — evita que el scheduler se
+ * pierda cuando el free tier duerme entre horas.
+ */
+notificationRouter.post('/run-reminders', allowScheduler, async (_req, res) => {
+  try {
+    await sendReminders()
+    res.json({ success: true })
+  } catch (error) {
+    console.error('Error en /run-reminders:', error)
+    res.status(500).json({ success: false, error: error.message })
   }
 })
 
